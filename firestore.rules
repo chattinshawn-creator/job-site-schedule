@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A device can edit once it has been unlocked with the team passcode.
+    function isEditor() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/editors/$(request.auth.uid));
+    }
+
+    // The team passcode lives here. Nobody can read it from the page.
+    match /config/{doc} {
+      allow read, write: if false;
+    }
+
+    // One record per unlocked device. Created only when the passcode matches.
+    match /editors/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code', 'name', 'at'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() < 80
+        && request.resource.data.code == get(/databases/$(database)/documents/config/passcode).data.code;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow list: if false;
+    }
+
+    // The schedule: anyone with the link can view; unlocked devices can edit.
+    match /projects/{id} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+    match /tasks/{id} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+    match /logs/{id} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+  }
+}

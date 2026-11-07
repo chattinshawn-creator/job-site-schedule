@@ -407,7 +407,7 @@ button { cursor: pointer; }
     ["flooring", "Flooring", "FLR"],
     ["framing", "Framing", "FRM"],
     ["hvac", "HVAC", "HVAC"],
-    ["inspection", "Inspections / Permits", "INSP"],
+    ["inspection", "Inspection", "INSP"],
     ["insulation", "Insulation / Air Seal", "INS"],
     ["masonry", "Interior Masonry / Waterproofing", "MAS"],
     ["cleaning", "Interior Cleaning", "CLN"],
@@ -744,7 +744,8 @@ button { cursor: pointer; }
           h("h3", null, fmtDay(di), di === today ? h("small", { text: "Today" }) : null, items.length ? h("small", { text: `${items.length} item${items.length === 1 ? "" : "s"}` }) : null),
           h("div", { class: "acts" },
             (S.db && (S.canWrite || logsOn(di).length)) ? h("button", { class: "btn", type: "button", onclick: () => openDayLog(di) }, logsOn(di).length ? "View log" : "Daily log") : null,
-            S.canWrite && S.db ? h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di }) }, "+ Add") : null)),
+            S.canWrite && S.db ? h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di, trade: "inspection" }) }, "+ Inspection") : null,
+            S.canWrite && S.db ? h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di }) }, "+ Add work") : null)),
         h("div", { class: "day-items" }, items.length ? items.map(card) : h("div", { class: "empty-day", text: "Nothing scheduled" }))
       ));
     }
@@ -796,7 +797,9 @@ button { cursor: pointer; }
         h("div", { class: "hint", text: items.length ? `${items.length} work item${items.length === 1 ? "" : "s"} active this day` : "Nothing scheduled this day." }),
         h("div", { class: "list" }, items.map(card)),
         logSection(di, items));
-      const foot = S.canWrite && S.db ? h("div", { class: "sheet-f" }, h("button", { class: "btn primary", type: "button", onclick: () => openTaskForm(null, { start: di }) }, `+ Add work on ${fmtShort(di)}`)) : null;
+      const foot = S.canWrite && S.db ? h("div", { class: "sheet-f" },
+        h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di, trade: "inspection" }) }, "+ Add inspection"),
+        h("button", { class: "btn primary", type: "button", onclick: () => openTaskForm(null, { start: di }) }, `+ Add work on ${fmtShort(di)}`)) : null;
       openSheet(fmtDay(di), body, foot, draw);
     };
     draw();
@@ -1008,7 +1011,7 @@ button { cursor: pointer; }
     const ro = !S.canWrite || !S.db;
     const d = Object.assign({
       projectId: S.project !== "all" ? S.project : (sortedProjects()[0] || {}).id || "__new",
-      title: "", trade: S.trade !== "all" ? S.trade : "framing", crew: "inhouse", assignee: "",
+      title: "", trade: S.trade !== "all" && S.trade !== "inspection" ? S.trade : "framing", crew: "inhouse", assignee: "",
       start: todayIso(), end: "", budget: "", materials: "", notes: "", workOrder: false, status: "scheduled",
       obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
       matStatus: "", matDate: "", inspResult: "pending", dependsOn: [],
@@ -1027,7 +1030,10 @@ button { cursor: pointer; }
     projSel.addEventListener("change", () => { newBox.hidden = projSel.value !== "__new"; if (!newBox.hidden) newName.focus(); });
 
     const title = h("textarea", { id: "f-title", rows: "2", placeholder: "What needs to be done (e.g. Frame second-floor bathroom wall)", value: d.title, disabled: ro });
-    const trade = sel("f-trd", TRADES.map(([k, l]) => [k, l]), d.trade, { disabled: ro });
+    const inspForm = d.trade === "inspection";
+    const trade = sel("f-trd", inspForm ? [["inspection", "Inspection"]] : TRADES.filter(([k]) => k !== "inspection").map(([k, l]) => [k, l]), d.trade, { disabled: ro });
+    const tradeCell = field("Category", trade, "f-trd");
+    tradeCell.hidden = inspForm;
     const crewSeg = h("div", { class: "radio-seg", role: "radiogroup", "aria-label": "In-house or sub" },
       ...[["inhouse", "In-house"], ["sub", "Sub"]].map(([v, l]) => h("label", null,
         h("input", { type: "radio", name: "crew", value: v, checked: d.crew === v, disabled: ro }), h("span", { text: l }))));
@@ -1145,7 +1151,7 @@ button { cursor: pointer; }
 
     const body = h("div", { class: "sheet-b" },
       field("Project", projSel, "f-proj"), newBox,
-      h("div", { class: "row2" }, field("Category", trade, "f-trd"), crewCell, inspTypeCell),
+      h("div", { class: "row2" }, tradeCell, crewCell, inspTypeCell),
       w(field("Work to be done", title, "f-title")),
       w(field("Crew or subcontractor", assignee, "f-who")),
       h("div", { class: "row2" }, h("div", { class: "field" }, startLbl, start), endCell, inspBox),
@@ -1259,7 +1265,8 @@ button { cursor: pointer; }
       } else saveBtn.disabled = false;
     });
 
-    openSheet(editing ? (ro ? "Work item" : "Edit work") : (defaults && defaults.title ? "Duplicate work" : "Add work"), body, foot, null);
+    const noun = inspForm ? "inspection" : "work";
+    openSheet(editing ? (ro ? (inspForm ? "Inspection" : "Work item") : "Edit " + noun) : (defaults && defaults.title ? "Duplicate " + noun : "Add " + noun), body, foot, null);
 
     if (editing && (t.updatedBy || t.createdBy)) {
       {

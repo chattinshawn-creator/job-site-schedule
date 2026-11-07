@@ -32,33 +32,41 @@ img { max-width: 100%; }
   --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --t-framing: #b0601a;
-  --t-masonry: #9a3b2b;
-  --t-demolition: #5b5f68;
-  --t-plumbing: #1f6db0;
-  --t-hvac: #0d8585;
-  --t-electrical: #b98d00;
-  --t-drywall: #8a68ad;
-  --t-roofing: #2e4a5c;
+  --t-appliances: #6b5b95;
+  --t-exterior: #7a6a4f;
   --t-cabinets: #5f8a1f;
-  --t-windows: #2f97cf;
-  --t-other: #a3477b;
+  --t-demolition: #5b5f68;
+  --t-drywall: #8a68ad;
+  --t-electrical: #b98d00;
+  --t-flooring: #8c5a2b;
+  --t-framing: #c2650f;
+  --t-hvac: #0d8585;
   --t-inspection: #20262e;
+  --t-insulation: #b0466f;
+  --t-masonry: #9a3b2b;
+  --t-cleaning: #2f8a6b;
+  --t-landscape: #3c7a26;
+  --t-painting: #4255b8;
+  --t-plumbing: #1f6db0;
+  --t-punchout: #a03a9a;
+  --t-roofing: #2e4a5c;
+  --t-safety: #c03e1f;
+  --t-trim: #946b10;
+  --t-windows: #2f97cf;
+  --t-other: #6f6878;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #12171d; --surface: #1a2129; --surface-2: #202832; --ink: #e6ebf0; --muted: #9aa7b4; --line: #303a46;
     --accent: #6f95ff; --accent-ink: #0d1420; --danger: #f07a62; --warn: #e6a640; --ok: #5fc38a; --scrim: rgba(0,0,0,.6);
-    --t-framing: #e0954f; --t-masonry: #e07a66; --t-demolition: #a5abb6; --t-plumbing: #63a8ec; --t-hvac: #45c4c0;
-    --t-electrical: #e8c440; --t-drywall: #bb9be0; --t-roofing: #8fb0c6; --t-cabinets: #9cc95a; --t-windows: #6cc6f2; --t-other: #e386b9; --t-inspection: #dfe5ec;
+    --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12171d; --surface: #1a2129; --surface-2: #202832; --ink: #e6ebf0; --muted: #9aa7b4; --line: #303a46;
   --accent: #6f95ff; --accent-ink: #0d1420; --danger: #f07a62; --warn: #e6a640; --ok: #5fc38a; --scrim: rgba(0,0,0,.6);
-  --t-framing: #e0954f; --t-masonry: #e07a66; --t-demolition: #a5abb6; --t-plumbing: #63a8ec; --t-hvac: #45c4c0;
-  --t-electrical: #e8c440; --t-drywall: #bb9be0; --t-roofing: #8fb0c6; --t-cabinets: #9cc95a; --t-windows: #6cc6f2; --t-other: #e386b9; --t-inspection: #dfe5ec;
+  --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2;
   color-scheme: dark;
 }
 
@@ -117,10 +125,28 @@ button { cursor: pointer; }
 .legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--t); display: inline-block; }
 
 /* Trade color binding */
-.t-framing { --t: var(--t-framing); } .t-masonry { --t: var(--t-masonry); } .t-demolition { --t: var(--t-demolition); }
-.t-plumbing { --t: var(--t-plumbing); } .t-hvac { --t: var(--t-hvac); } .t-electrical { --t: var(--t-electrical); }
-.t-drywall { --t: var(--t-drywall); } .t-roofing { --t: var(--t-roofing); } .t-cabinets { --t: var(--t-cabinets); }
-.t-windows { --t: var(--t-windows); } .t-other { --t: var(--t-other); } .t-inspection { --t: var(--t-inspection); }
+.t-appliances { --t: var(--t-appliances); }
+.t-exterior { --t: var(--t-exterior); }
+.t-cabinets { --t: var(--t-cabinets); }
+.t-demolition { --t: var(--t-demolition); }
+.t-drywall { --t: var(--t-drywall); }
+.t-electrical { --t: var(--t-electrical); }
+.t-flooring { --t: var(--t-flooring); }
+.t-framing { --t: var(--t-framing); }
+.t-hvac { --t: var(--t-hvac); }
+.t-inspection { --t: var(--t-inspection); }
+.t-insulation { --t: var(--t-insulation); }
+.t-masonry { --t: var(--t-masonry); }
+.t-cleaning { --t: var(--t-cleaning); }
+.t-landscape { --t: var(--t-landscape); }
+.t-painting { --t: var(--t-painting); }
+.t-plumbing { --t: var(--t-plumbing); }
+.t-punchout { --t: var(--t-punchout); }
+.t-roofing { --t: var(--t-roofing); }
+.t-safety { --t: var(--t-safety); }
+.t-trim { --t: var(--t-trim); }
+.t-windows { --t: var(--t-windows); }
+.t-other { --t: var(--t-other); }
 .bar.t-inspection { border-width: 2px; font-weight: 600; }
 
 /* Month grid */
@@ -347,7 +373,7 @@ button { cursor: pointer; }
       </div>
       <span class="spacer"></span>
       <select class="select" id="f-project" aria-label="Filter by project"></select>
-      <select class="select" id="f-trade" aria-label="Filter by trade"></select>
+      <select class="select" id="f-trade" aria-label="Filter by category"></select>
       <select class="select" id="f-flag" aria-label="Filter by observed or media"></select>
       <div class="seg" role="group" aria-label="View">
         <button type="button" id="v-month" aria-pressed="true">Month</button>
@@ -372,11 +398,31 @@ button { cursor: pointer; }
 (function () {
   "use strict";
   const TRADES = [
-    ["framing", "Framing", "FRM"], ["masonry", "Masonry", "MAS"], ["demolition", "Demolition", "DEMO"],
-    ["plumbing", "Plumbing", "PLB"], ["hvac", "HVAC", "HVAC"], ["electrical", "Electrical", "ELEC"],
-    ["drywall", "Drywall", "DRY"], ["roofing", "Roofing", "ROOF"], ["cabinets", "Cabinets / Counters", "CAB"],
-    ["windows", "Windows", "WIN"], ["inspection", "Inspection", "INSP"], ["other", "Other", "OTH"]
+    ["appliances", "Appliances", "APPL"],
+    ["exterior", "Building Exterior Work", "EXT"],
+    ["cabinets", "Cabinets / Counters", "CAB"],
+    ["demolition", "Demo / Debris Removal", "DEMO"],
+    ["drywall", "Drywall / Plaster Install / Repair", "DRY"],
+    ["electrical", "Electric", "ELEC"],
+    ["flooring", "Flooring", "FLR"],
+    ["framing", "Framing", "FRM"],
+    ["hvac", "HVAC", "HVAC"],
+    ["inspection", "Inspections / Permits", "INSP"],
+    ["insulation", "Insulation / Air Seal", "INS"],
+    ["masonry", "Interior Masonry / Waterproofing", "MAS"],
+    ["cleaning", "Interior Cleaning", "CLN"],
+    ["landscape", "Landscape, Hardscape & Fencing", "LAND"],
+    ["painting", "Painting", "PNT"],
+    ["plumbing", "Plumbing", "PLB"],
+    ["punchout", "Punchout", "PUNCH"],
+    ["roofing", "Roof", "ROOF"],
+    ["safety", "Securing / Safety", "SAFE"],
+    ["trim", "Trimout / Doors", "TRIM"],
+    ["windows", "Windows", "WIN"],
+    ["other", "Other", "OTH"]
   ];
+  const INSP_TYPES = [["framing", "Framing"], ["elec_rough", "Electric rough-in"], ["hvac_rough", "HVAC rough-in"], ["plumb_rough", "Plumbing rough-in"], ["insulation", "Insulation"], ["elec_final", "Electric final"], ["hvac_final", "HVAC final"], ["plumb_final", "Plumbing final"], ["building_final", "Building final"]];
+  const INSP_TYPE = Object.fromEntries(INSP_TYPES);
   const TRADE = Object.fromEntries(TRADES.map(([k, l, c]) => [k, { label: l, code: c }]));
   const STATUSES = [["scheduled", "Scheduled"], ["progress", "In progress"], ["done", "Done"], ["delayed", "Delayed"]];
   const STATUS = Object.fromEntries(STATUSES);
@@ -516,7 +562,7 @@ button { cursor: pointer; }
     for (const p of sortedProjects()) fp.append(h("option", { value: p.id, text: p.name || "Untitled project" }));
     if (S.project !== "all" && !S.projects.has(S.project) && S.loadedP) S.project = "all";
     fp.value = S.project;
-    const ft = $("f-trade"); ft.replaceChildren(h("option", { value: "all", text: "All trades" }));
+    const ft = $("f-trade"); ft.replaceChildren(h("option", { value: "all", text: "All categories" }));
     for (const [k, l] of TRADES) ft.append(h("option", { value: k, text: l }));
     ft.value = S.trade;
     const ff = $("f-flag"); ff.replaceChildren(...FLAGS.map(([v, l]) => h("option", { value: v, text: l })));
@@ -638,7 +684,7 @@ button { cursor: pointer; }
     const waits = isDone(t) ? [] : waitingOn(t);
     const visit = (lbl, time, who, n) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
       [fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set");
-    const who = (t.crew === "sub" ? "Sub" : "In-house") + (t.assignee ? " · " + t.assignee : "");
+    const who = isInsp(t) ? (INSP_TYPE[t.inspType] || "Inspection") : (t.crew === "sub" ? "Sub" : "In-house") + (t.assignee ? " · " + t.assignee : "");
     const wo = h("label", { class: "wo " + (t.workOrder ? "has" : "missing"), onclick: e => e.stopPropagation() },
       h("input", {
         type: "checkbox", checked: !!t.workOrder, disabled: !S.canWrite || !S.db, "aria-label": "Work order created",
@@ -910,9 +956,9 @@ button { cursor: pointer; }
     const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
     const pn = id => (S.projects.get(id) || {}).name || "";
     const yn = v => v ? "Yes" : "No";
-    const head = ["Project", "Work to be done", "Trade", "In-house / Sub", "Crew / Sub name", "Start", "Deadline", "Status", "Inspection result", "Budget", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
+    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Crew / Sub name", "Start", "Deadline", "Status", "Inspection", "Budget", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
     const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", t.assignee || "", t.start, endOf(t),
-      STATUS[t.status] || "Scheduled", isInsp(t) ? (INSP[t.inspResult] || "Pending") : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget),
+      STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget),
       matList(t).map(m => `${lineText(m)} - ${lineStatus(m)}`).join("; "),
       matList(t).length ? `${matList(t).filter(m => m.status === "delivered").length} of ${matList(t).length}` : "",
       matList(t).filter(m => linePending(m) && m.date).map(m => m.date).sort()[0] || "", isInsp(t) ? "" : yn(t.workOrder),
@@ -1033,7 +1079,18 @@ button { cursor: pointer; }
     // inspection
     const inspRes = sel("f-insp", INSPS, d.inspResult || "pending", { disabled: ro });
     const inspBox = field("Inspection result", inspRes, "f-insp");
-    const syncInsp = () => { inspBox.hidden = trade.value !== "inspection"; woRow.hidden = trade.value === "inspection"; };
+    const inspType = sel("f-insp-type", INSP_TYPES, d.inspType || "framing", { disabled: ro });
+    const inspTypeCell = field("Inspection type", inspType, "f-insp-type");
+    const crewCell = h("div", { class: "field" }, h("span", { class: "lbl", text: "Who does it" }), crewSeg);
+    const startLbl = h("label", { for: "f-start", text: "Start date" });
+    const endCell = h("div", { class: "field" }, h("label", { for: "f-end", text: "Deadline" }), end, h("span", { class: "hint", text: "Leave blank for one-day work" }));
+    const workOnly = [];
+    const syncInsp = () => {
+      const ins = trade.value === "inspection";
+      inspBox.hidden = !ins; inspTypeCell.hidden = !ins;
+      startLbl.textContent = ins ? "Inspection date" : "Start date";
+      for (const el of workOnly) el.hidden = ins;
+    };
     // waiting on
     let deps = Array.isArray(d.dependsOn) ? d.dependsOn.slice() : [];
     const depList = h("div", { class: "deps" });
@@ -1084,30 +1141,31 @@ button { cursor: pointer; }
     archCb.addEventListener("change", () => { archBox.hidden = !archCb.checked; if (archCb.checked) archText.focus(); });
     const err = h("div", { class: "err", role: "alert" });
     const meta = h("div", { class: "hint" });
+    const w = el => { workOnly.push(el); return el; };
 
     const body = h("div", { class: "sheet-b" },
       field("Project", projSel, "f-proj"), newBox,
-      field("Work to be done", title, "f-title"),
-      h("div", { class: "row2" }, field("Trade", trade, "f-trd"), h("div", { class: "field" }, h("span", { class: "lbl", text: "Who does it" }), crewSeg)),
-      field("Crew or subcontractor", assignee, "f-who"),
-      h("div", { class: "row2" }, field("Start date", start, "f-start"), h("div", { class: "field" }, h("label", { for: "f-end", text: "Deadline" }), end, h("span", { class: "hint", text: "Leave blank for one-day work" }))),
-      h("div", { class: "row2" }, field("Budget", h("div", { class: "money-in" }, h("span", { text: "$" }), budget), "f-budget"), field("Status", status, "f-status")),
-      inspBox,
-      matField,
-      h("div", { class: "field" }, h("label", { for: "f-dep", text: "Waiting on (can't start until done)" }), depList, depSel,
-        h("span", { class: "hint", text: "Pick earlier work or an inspection in this project. You'll see a warning until it's done or passed." })),
+      h("div", { class: "row2" }, field("Category", trade, "f-trd"), crewCell, inspTypeCell),
+      w(field("Work to be done", title, "f-title")),
+      w(field("Crew or subcontractor", assignee, "f-who")),
+      h("div", { class: "row2" }, h("div", { class: "field" }, startLbl, start), endCell, inspBox),
+      w(h("div", { class: "row2" }, field("Budget", h("div", { class: "money-in" }, h("span", { text: "$" }), budget), "f-budget"), field("Status", status, "f-status"))),
+      w(matField),
+      w(h("div", { class: "field" }, h("label", { for: "f-dep", text: "Waiting on (can't start until done)" }), depList, depSel,
+        h("span", { class: "hint", text: "Pick earlier work or an inspection in this project. You'll see a warning until it's done or passed." }))),
       field("Notes", notes, "f-notes"),
-      woRow,
-      h("div", { class: "field" }, h("span", { class: "lbl", text: "Observed work (check any that apply)" }),
+      w(woRow),
+      w(h("div", { class: "field" }, h("span", { class: "lbl", text: "Observed work (check any that apply)" }),
         h("div", { class: "checks" },
           h("label", { class: "check-row plain", for: "f-tour" }, obsTour, "Tour"),
-          h("label", { class: "check-row plain", for: "f-req" }, obsReq, "Requity"))),
-      tourBox, reqBox,
-      h("label", { class: "check-row plain", for: "f-arch" }, archCb, "Architect question"),
-      archBox,
-      h("label", { class: "check-row plain", for: "f-media" }, media, "Media requested"),
-      mediaBox,
+          h("label", { class: "check-row plain", for: "f-req" }, obsReq, "Requity")))),
+      w(h("div", { class: "field" }, tourBox, reqBox)),
+      w(h("label", { class: "check-row plain", for: "f-arch" }, archCb, "Architect question")),
+      w(h("div", { class: "field" }, archBox)),
+      w(h("label", { class: "check-row plain", for: "f-media" }, media, "Media requested")),
+      w(h("div", { class: "field" }, mediaBox)),
       err, meta);
+    workOnly.push(crewCell, endCell);
 
     trade.addEventListener("change", syncInsp); syncInsp(); drawDeps();
     let confirming = false;
@@ -1136,10 +1194,11 @@ button { cursor: pointer; }
 
     if (saveBtn) saveBtn.addEventListener("click", async () => {
       err.textContent = "";
-      const ttl = title.value.trim();
+      const ins = trade.value === "inspection";
+      const ttl = ins ? `${INSP_TYPE[inspType.value] || "Inspection"} inspection` : title.value.trim();
       if (!ttl) { err.textContent = "Describe the work to be done."; title.focus(); return; }
-      if (!start.value) { err.textContent = "Pick a start date."; start.focus(); return; }
-      if (end.value && end.value < start.value) { err.textContent = "The deadline is before the start date. Move it to the start date or later."; end.focus(); return; }
+      if (!start.value) { err.textContent = ins ? "Pick the inspection date." : "Pick a start date."; start.focus(); return; }
+      if (!ins && end.value && end.value < start.value) { err.textContent = "The deadline is before the start date. Move it to the start date or later."; end.focus(); return; }
       let b = budget.value.replace(/[$,\s]/g, "");
       if (b !== "" && !/^\d+(\.\d{1,2})?$/.test(b)) { err.textContent = "Enter the budget as a dollar amount, like 2500 or 2500.50."; budget.focus(); return; }
       const ml = mediaLink.value.trim();
@@ -1174,8 +1233,16 @@ button { cursor: pointer; }
         archAnsweredAt: archCb.checked && archA.value.trim() ? ((d.archA || "").trim() ? (d.archAnsweredAt || todayIso()) : todayIso()) : "",
         tourTime: obsTour.checked ? tv.time : "", tourWho: obsTour.checked ? tv.who : "", tourCount: obsTour.checked && tv.count !== "" ? Number(tv.count) : "",
         reqTime: obsReq.checked ? rv.time : "", reqWho: obsReq.checked ? rv.who : "", reqCount: obsReq.checked && rv.count !== "" ? Number(rv.count) : "",
+        inspType: ins ? inspType.value : "",
         ...stamp()
       };
+      if (ins) Object.assign(data, {
+        crew: "sub", assignee: "", end: "", budget: null, materialsList: [], workOrder: false, dependsOn: [],
+        status: inspRes.value === "pass" ? "done" : "scheduled",
+        obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
+        archQ: false, archText: "", archA: "", archAnsweredAt: "",
+        tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: ""
+      });
       saveBtn.disabled = true;
       let ok;
       if (editing) {

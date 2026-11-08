@@ -1133,7 +1133,7 @@ button { cursor: pointer; }
       (e.at || "").slice(0, 10), e.by || "", pn(t.projectId), t.title || "",
       e.kind === "budget" ? "Budget" : "Dates",
       e.kind === "budget" ? e.from : `${e.from.start} to ${e.from.end}`, e.kind === "budget" ? e.to : `${e.to.start} to ${e.to.end}`,
-      e.kind === "budget" ? e.amount : e.days, TYPE_TXT[e.type] || e.type || "", ROLE_TXT[e.tiedTo] || "", e.coordinator || "", e.lead || "", e.squadLeader || "", (e.subs || []).join(", "), e.reason || ""]));
+      e.kind === "budget" ? e.amount : e.days, TYPE_TXT[e.type] || e.type || "", tiedList(e).map(r => ROLE_TXT[r] || r).join(", "), e.coordinator || "", e.lead || "", e.squadLeader || "", (e.subs || []).join(", "), e.reason || ""]));
     const ws4 = XLSX.utils.aoa_to_sheet([chead, ...crows]);
     ws4["!cols"] = chead.map(x => ({ wch: ["Work to be done", "Reason"].includes(x) ? 40 : 18 }));
     const logs = [...S.logs.values()].filter(l => l.date >= A && l.date <= B && (S.project === "all" || l.projectId === S.project)).sort((x, y) => x.date.localeCompare(y.date) || pn(x.projectId).localeCompare(pn(y.projectId)));
@@ -1221,8 +1221,35 @@ button { cursor: pointer; }
   const plural = (n, w) => `${n} ${w}${Math.abs(n) === 1 ? "" : "s"}`;
   const rangeTxt = (a, b) => a === b ? fmtShort(a) : `${fmtShort(a)} to ${fmtShort(b)}`;
   const shiftTxt = (n, what) => n === 0 ? "" : `${what} ${plural(Math.abs(n), "day")} ${n > 0 ? "later" : "earlier"}`;
-  const ROLE_TXT = { coordinator: "Project coordinator", lead: "Project lead", squad: "Squadron leader", sub: "Subcontractor", both: "Coordinator and lead", disputed: "Disputed", neither: "Neither" };
+  const ROLE_TXT = { coordinator: "Project coordinator", lead: "Project lead", squad: "Squadron leader", sub: "Subcontractor", disputed: "Disputed", external: "External" };
 
+  // "Tied to" holds a list of roles; older records stored one word.
+  function tiedList(e) {
+    const v = e && e.tiedTo;
+    if (Array.isArray(v)) return v.filter(Boolean);
+    if (!v) return [];
+    if (v === "both") return ["coordinator", "lead"];
+    if (v === "neither") return ["external"];
+    return [v];
+  }
+  const TIED_ORDER = ["coordinator", "lead", "squad", "sub", "disputed", "external"];
+  function tiedOptions(names) {
+    return [["coordinator", "Project coordinator", names.coord || "No name set for this job"], ["lead", "Project lead", names.lead || "No name set for this job"],
+      ["squad", "Squadron leader", names.squad || "No name set for this job"],
+      ...(names.showSub ? [["sub", "Subcontractor", names.subs && names.subs.length ? names.subs.join(", ") : "No subcontractor named on this job"]] : []),
+      ["disputed", "Disputed", "Fault is contested between the people checked"],
+      ["external", "External", "Outside cause (weather, owner, city, utility…)"]];
+  }
+  function checkGroup(name, opts, values) {
+    const wrap = h("div", { class: "rgroup", role: "group" });
+    for (const [v, l, sub] of opts) {
+      wrap.append(h("label", { class: "ropt" },
+        h("input", { type: "checkbox", name, value: v, checked: values.includes(v) }),
+        h("span", null, h("b", { text: l }), sub ? h("small", { text: sub }) : null)));
+    }
+    wrap.vals = () => [...wrap.querySelectorAll("input:checked")].map(x => x.value).sort((a, b) => TIED_ORDER.indexOf(a) - TIED_ORDER.indexOf(b));
+    return wrap;
+  }
   function radioGroup(name, opts, value) {
     const wrap = h("div", { class: "rgroup", role: "radiogroup" });
     for (const [v, l, sub] of opts) {
@@ -1248,18 +1275,14 @@ button { cursor: pointer; }
     return new Promise(resolve => {
       const box = $("cbox");
       const err = h("div", { class: "err", role: "alert" });
-      const tiedOpts = [["coordinator", "Project coordinator", coord || "No name set for this job"], ["lead", "Project lead", lead || "No name set for this job"],
-        ["squad", "Squadron leader", squad || "No name set for this job"],
-        ...(usesSub(cur) ? [["sub", "Subcontractor", subs.length ? subs.join(", ") : "No subcontractor named on this job"]] : []),
-        ["both", "Coordinator and lead", "Both share it"],
-        ["disputed", "Disputed", "Coordinator and lead disagree on who's at fault"], ["neither", "Neither", "Outside cause (weather, owner, city…)"]];
+      const tiedOpts = tiedOptions({ coord, lead, squad, subs, showSub: usesSub(cur) });
       const parts = [];
       let dType, dTied, bType, bTied;
       if (dChanged) {
         const later = sS > 0 || eS > 0, earlier = sS < 0 || eS < 0;
         dType = radioGroup("cm-dtype", [["delay", "Unexpected delay", "Work started or will finish later than planned"], ["early", "Unexpected early start", "Work started or will finish sooner than planned"], ["planned", "Planned change", "Not counted in the stats"]], later && !earlier ? "delay" : earlier && !later ? "early" : "");
-        dTied = radioGroup("cm-dtied", tiedOpts, "");
-        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to" }), dTied);
+        dTied = checkGroup("cm-dtied", tiedOpts, []);
+        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to (choose all that apply)" }), dTied);
         const sync = () => { tiedWrap.hidden = dType.val() === "planned"; };
         dType.addEventListener("change", sync);
         parts.push(h("section", { class: "csec" },
@@ -1270,8 +1293,8 @@ button { cursor: pointer; }
       if (bChanged) {
         const up = nb > ob;
         bType = radioGroup("cm-btype", [["overrun", "Unexpected cost increase"], ["savings", "Unexpected savings"], ["planned", "Planned change", "Not counted in the stats"]], up ? "overrun" : "savings");
-        bTied = radioGroup("cm-btied", tiedOpts, "");
-        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to" }), bTied);
+        bTied = checkGroup("cm-btied", tiedOpts, []);
+        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to (choose all that apply)" }), bTied);
         bType.addEventListener("change", () => { tiedWrap.hidden = bType.val() === "planned"; });
         parts.push(h("section", { class: "csec" },
           h("div", { class: "csum" }, h("b", { text: "Budget: " }), `${money(ob)} → ${money(nb)}`,
@@ -1286,16 +1309,18 @@ button { cursor: pointer; }
         const out = [], at = new Date().toISOString(), r = reason.value.trim();
         const base = { at, by: S.me || "Someone", coordinator: coord, lead, squadLeader: squad, subs: subs.slice(), reason: r };
         if (dChanged) {
-          const ty = dType.val(), ti = dTied.val();
+          const ty = dType.val(), ti = dTied.vals();
           if (!ty) { err.textContent = "Pick what kind of date change this was."; return; }
-          if (ty !== "planned" && !ti) { err.textContent = "Pick who the date change is tied to."; return; }
-          out.push({ ...base, kind: "dates", type: ty, tiedTo: ty === "planned" ? "" : ti, from: { start: os, end: oe }, to: { start: ns, end: ne }, startShift: sS, endShift: eS, days: Math.max(Math.abs(sS), Math.abs(eS)) });
+          if (ty !== "planned" && !ti.length) { err.textContent = "Check at least one option under Tied to for the date change."; return; }
+          if (ti.length === 1 && ti[0] === "disputed") { err.textContent = "Disputed needs the people involved checked too, like Project coordinator and Project lead."; return; }
+          out.push({ ...base, kind: "dates", type: ty, tiedTo: ty === "planned" ? [] : ti, from: { start: os, end: oe }, to: { start: ns, end: ne }, startShift: sS, endShift: eS, days: Math.max(Math.abs(sS), Math.abs(eS)) });
         }
         if (bChanged) {
-          const ty = bType.val(), ti = bTied.val();
+          const ty = bType.val(), ti = bTied.vals();
           if (!ty) { err.textContent = "Pick what kind of budget change this was."; return; }
-          if (ty !== "planned" && !ti) { err.textContent = "Pick who the budget change is tied to."; return; }
-          out.push({ ...base, kind: "budget", type: ty, tiedTo: ty === "planned" ? "" : ti, from: ob, to: nb, amount: nb - ob });
+          if (ty !== "planned" && !ti.length) { err.textContent = "Check at least one option under Tied to for the budget change."; return; }
+          if (ti.length === 1 && ti[0] === "disputed") { err.textContent = "Disputed needs the people involved checked too, like Project coordinator and Project lead."; return; }
+          out.push({ ...base, kind: "budget", type: ty, tiedTo: ty === "planned" ? [] : ti, from: ob, to: nb, amount: nb - ob });
         }
         done(out);
       });
@@ -1394,11 +1419,11 @@ button { cursor: pointer; }
   const CHANGE_TYPE = { delay: "Unexpected delay", early: "Unexpected early start", planned: "Planned change", overrun: "Unexpected cost increase", savings: "Unexpected savings" };
   const sameEntry = (a, b) => a && b && a.at === b.at && a.kind === b.kind;
   function tiedName(e) {
-    return e.tiedTo === "coordinator" ? `Project coordinator${e.coordinator ? " · " + e.coordinator : ""}`
-      : e.tiedTo === "lead" ? `Project lead${e.lead ? " · " + e.lead : ""}`
-      : e.tiedTo === "squad" ? `Squadron leader${e.squadLeader ? " · " + e.squadLeader : ""}`
-      : e.tiedTo === "sub" ? `Subcontractor${Array.isArray(e.subs) && e.subs.length ? " · " + e.subs.join(", ") : ""}`
-      : ROLE_TXT[e.tiedTo] || "";
+    return tiedList(e).map(r => r === "coordinator" ? `Coordinator${e.coordinator ? " · " + e.coordinator : ""}`
+      : r === "lead" ? `Lead${e.lead ? " · " + e.lead : ""}`
+      : r === "squad" ? `Squadron leader${e.squadLeader ? " · " + e.squadLeader : ""}`
+      : r === "sub" ? `Subcontractor${Array.isArray(e.subs) && e.subs.length ? " · " + e.subs.join(", ") : ""}`
+      : ROLE_TXT[r] || r);
   }
   async function saveHistory(t, mutate, msg) {
     const cur = S.tasks.get(t.id);
@@ -1440,7 +1465,7 @@ button { cursor: pointer; }
           h("div", { text: what }),
           h("div", { class: "rec-tags" },
             h("span", { class: "pill " + (e.type === "planned" ? "scheduled" : e.type === "delay" || e.type === "overrun" ? "delayed" : "progress"), text: CHANGE_TYPE[e.type] || e.type || "Unknown" }),
-            e.tiedTo ? h("span", { class: "chip", text: tiedName(e) }) : null),
+            tiedName(e).map(x => h("span", { class: "chip", text: x }))),
           e.reason ? h("div", { class: "hint", text: "Reason: " + e.reason }) : null,
           e.editedBy ? h("div", { class: "hint", text: `Corrected by ${personName(e.editedBy)}` }) : null);
         if (!S.canWrite || !S.db) { row.append(summary); return row; }
@@ -1448,21 +1473,21 @@ button { cursor: pointer; }
           const typeOpts = e.kind === "budget" ? [["overrun", CHANGE_TYPE.overrun], ["savings", CHANGE_TYPE.savings], ["planned", "Planned change", "Not counted in the stats"]]
             : [["delay", CHANGE_TYPE.delay], ["early", CHANGE_TYPE.early], ["planned", "Planned change", "Not counted in the stats"]];
           const tyG = radioGroup("rc-type", typeOpts, e.type);
-          const tiG = radioGroup("rc-tied", [["coordinator", "Project coordinator", e.coordinator || ""], ["lead", "Project lead", e.lead || ""], ["squad", "Squadron leader", e.squadLeader || ""], ...((t.crew === "sub" || isInsp(t) || e.tiedTo === "sub") ? [["sub", "Subcontractor", (e.subs || []).join(", ")]] : []),
-            ["both", "Coordinator and lead"], ["disputed", "Disputed", "Coordinator and lead disagree on who's at fault"], ["neither", "Neither", "Outside cause"]], e.tiedTo);
-          const tiW = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to" }), tiG);
+          const tiG = checkGroup("rc-tied", tiedOptions({ coord: e.coordinator, lead: e.lead, squad: e.squadLeader, subs: e.subs || [], showSub: t.crew === "sub" || isInsp(t) || tiedList(e).includes("sub") }), tiedList(e));
+          const tiW = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to (choose all that apply)" }), tiG);
           tiW.hidden = e.type === "planned";
           tyG.addEventListener("change", () => { tiW.hidden = tyG.val() === "planned"; });
           const rs = h("textarea", { id: "rc-reason", rows: "2", value: e.reason || "" });
           const err = h("div", { class: "err", role: "alert" });
           const save = h("button", { class: "btn primary", type: "button" }, "Save correction");
           save.addEventListener("click", async () => {
-            const ty = tyG.val(), ti = tiG.val();
-            if (ty !== "planned" && !ti) { err.textContent = "Pick who this change is tied to."; return; }
+            const ty = tyG.val(), ti = tiG.vals();
+            if (ty !== "planned" && !ti.length) { err.textContent = "Check at least one option under Tied to."; return; }
+            if (ti.length === 1 && ti[0] === "disputed") { err.textContent = "Disputed needs the people involved checked too."; return; }
             save.disabled = true;
             const ok = await saveHistory(t, hist => {
               const i = hist.findIndex(x => sameEntry(x, e)); if (i < 0) return null;
-              hist[i] = Object.assign({}, hist[i], { type: ty, tiedTo: ty === "planned" ? "" : ti, reason: rs.value.trim(), editedBy: S.me || "Someone", editedAt: new Date().toISOString() });
+              hist[i] = Object.assign({}, hist[i], { type: ty, tiedTo: ty === "planned" ? [] : ti, reason: rs.value.trim(), editedBy: S.me || "Someone", editedAt: new Date().toISOString() });
               return { history: hist };
             }, "Record corrected");
             if (ok) { editing = null; draw(); } else save.disabled = false;
@@ -1512,13 +1537,18 @@ button { cursor: pointer; }
       const allItems = [...S.tasks.values()].filter(t => validDate(t.start) && (proj === "all" || t.projectId === proj));
       const jobs = allItems.filter(t => !isInsp(t));
       const entries = allItems.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => Object.assign({ t }, e))).filter(e => e && e.at && inP(e.at.slice(0, 10)));
-      const people = e => e.tiedTo === "coordinator" ? [[e.coordinator || "Unnamed", "Coordinator"]]
-        : e.tiedTo === "lead" ? [[e.lead || "Unnamed", "Lead"]]
-        : e.tiedTo === "squad" ? [[e.squadLeader || "Unnamed", "Squadron leader"]]
-        : e.tiedTo === "sub" ? ((Array.isArray(e.subs) && e.subs.length ? e.subs : ["Unnamed"]).map(n => [n, "Subcontractor"]))
-        : e.tiedTo === "both" ? [[e.coordinator || "Unnamed", "Coordinator"], [e.lead || "Unnamed", "Lead"]]
-        : e.tiedTo === "disputed" ? [["Disputed (coordinator vs. lead)", ""]]
-        : [["Not tied to anyone", ""]];
+      const people = e => {
+        const out = [];
+        for (const r of tiedList(e)) {
+          if (r === "coordinator") out.push([e.coordinator || "Unnamed", "Coordinator"]);
+          else if (r === "lead") out.push([e.lead || "Unnamed", "Lead"]);
+          else if (r === "squad") out.push([e.squadLeader || "Unnamed", "Squadron leader"]);
+          else if (r === "sub") (Array.isArray(e.subs) && e.subs.length ? e.subs : ["Unnamed"]).forEach(n => out.push([n, "Subcontractor"]));
+          else if (r === "disputed") out.push(["Disputed", ""]);
+          else if (r === "external") out.push(["External", ""]);
+        }
+        return out.length ? out : [["Not tied to anyone", ""]];
+      };
       const tbl = (head, rows, empty) => rows.length
         ? h("div", null, h("div", { class: "tscroll" }, h("table", { class: "stbl" }, h("thead", null, h("tr", null, head.map((x, i) => h("th", { class: i ? "n" : "", text: x })))),
             h("tbody", null, rows.map(r => h("tr", null, r.map((x, i) => h("td", { class: i ? "n" : "", text: x }))))))))

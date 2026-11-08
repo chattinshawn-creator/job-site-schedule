@@ -53,6 +53,11 @@ img { max-width: 100%; }
   --t-safety: #c03e1f;
   --t-trim: #946b10;
   --t-windows: #2f97cf;
+  --insp-silver: #c9ced5;
+  --insp-rim: #8e959e;
+  --insp-pass: #1e9a4b;
+  --insp-fail: #d32f2a;
+  --insp-pend: #c98a00;
   --t-other: #6f6878;
 }
 @media (prefers-color-scheme: dark) {
@@ -209,6 +214,14 @@ button { cursor: pointer; }
 .madd { justify-self: start; }
 .matline .ms.needed, .matline .ms.ordered { color: var(--warn); }
 .matline .ms.delivered { color: var(--ok); }
+.idots { display: inline-flex; gap: 3px; align-items: center; margin-left: 4px; height: 22px; flex-wrap: wrap; min-width: 0; }
+.idot { width: 18px; height: 18px; display: inline-block; cursor: pointer; border-radius: 50%; flex: none; }
+.idot svg { display: block; width: 100%; height: 100%; }
+.idot:hover { transform: scale(1.12); }
+.idot:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.imore { display: none; font-size: 9px; font-weight: 700; color: var(--muted); }
+.legend .idot { width: 14px; height: 14px; cursor: default; }
+.legend .idot:hover { transform: none; }
 .logmark { margin-left: auto; font-family: var(--f-mono); font-size: 9px; font-weight: 600; padding: 1px 4px; border-radius: 3px; border: 1px solid var(--muted); color: var(--muted); line-height: 1.3; }
 .cell.today .logmark { border-color: var(--accent); color: var(--accent); }
 .logrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; flex-wrap: wrap; }
@@ -328,6 +341,11 @@ button { cursor: pointer; }
   .mrow .x { grid-column: 3; grid-row: 1; }
   .mrow .mq { grid-column: 1; } .mrow .ms-sel { grid-column: 2; } .mrow .md { grid-column: 1 / 3; }
   .row3 > :nth-child(2) { grid-column: 1 / -1; grid-row: 1; }
+  .idot { width: 13px; height: 13px; }
+  .idots .idot ~ .idot { display: none; }
+  .imore { display: inline; }
+  .idots { gap: 1px; margin-left: 1px; height: 20px; flex-wrap: nowrap; overflow: hidden; }
+  .cell { padding: 3px 3px; }
   .logmark { font-size: 0; width: 6px; height: 6px; padding: 0; border-radius: 50%; background: var(--muted); }
   .bar .code { font-size: 9px; }
   .more { font-size: 10px; padding: 0 4px; }
@@ -451,6 +469,18 @@ button { cursor: pointer; }
   const isLink = s => typeof s === "string" && /^https:\/\/\S+$/.test(s.trim());
   const spanLabel = t => t.start === endOf(t) ? fmtDay(t.start) : `${fmtShort(t.start)} to ${fmtShort(endOf(t))}`;
   const isInsp = t => t.trade === "inspection";
+  const INSP_ICON = {
+    pass: '<path d="M6.2 10.4l2.6 2.6 5-5.6" fill="none" stroke="var(--insp-pass)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    fail: '<path d="M7 7l6 6M13 7l-6 6" fill="none" stroke="var(--insp-fail)" stroke-width="2.4" stroke-linecap="round"/>',
+    pending: '<circle cx="5.9" cy="10" r="1.9" fill="var(--insp-pend)"/><circle cx="10" cy="10" r="1.9" fill="var(--insp-pend)"/><circle cx="14.1" cy="10" r="1.9" fill="var(--insp-pend)"/>'
+  };
+  function inspDot(res, title, onclick) {
+    const r = INSP_ICON[res] ? res : "pending";
+    const el = h("span", Object.assign({ class: "idot", title }, onclick ? { role: "button", tabindex: "0", "aria-label": title,
+      onclick: e => { e.stopPropagation(); onclick(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onclick(); } } } : { "aria-hidden": "true" }));
+    el.innerHTML = '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="var(--insp-silver)" stroke="var(--insp-rim)" stroke-width="1.2"/>' + INSP_ICON[r] + '</svg>';
+    return el;
+  }
   const isDone = t => t.status === "done" || (isInsp(t) && t.inspResult === "pass");
   const satisfied = isDone;
   const effSt = t => { if (isInsp(t)) { if (t.inspResult === "pass") return "done"; if (t.inspResult === "fail") return "delayed"; } return STATUS[t.status] ? t.status : "scheduled"; };
@@ -618,7 +648,8 @@ button { cursor: pointer; }
       stat("On site today", String(active.length), fmtDay(today), "", active.length ? active : null, "On site today"),
       stat(S.view === "month" ? "Budgeted this month" : "Budgeted this week", money(budget), `${inView.length} work item${inView.length === 1 ? "" : "s"} in view`, "", inView.length ? inView : null, S.view === "month" ? "This month" : "This week")
     );
-    $("legend").replaceChildren(...TRADES.map(([k, l, c]) => h("span", { class: "t-" + k }, h("i"), `${c} ${l}`)),
+    $("legend").replaceChildren(...TRADES.filter(([k]) => k !== "inspection").map(([k, l, c]) => h("span", { class: "t-" + k }, h("i"), `${c} ${l}`)),
+      h("span", null, inspDot("pending"), "Inspection pending"), h("span", null, inspDot("pass"), "Passed"), h("span", null, inspDot("fail"), "Failed"),
       h("span", null, "Dashed edge: continues"), h("span", null, "Striped: delayed"),
       h("span", null, h("b", { class: "tag", text: "TOUR" }), " Tour"), h("span", null, h("b", { class: "tag", text: "REQ" }), " Requity"), h("span", null, h("b", { class: "tag media", text: "MEDIA" }), " Media requested"), h("span", null, h("b", { class: "tag warn", text: "WAIT" }), " Waiting on other work"), h("span", null, h("b", { class: "tag warn", text: "MAT" }), " Materials not delivered"), h("span", null, h("b", { class: "tag arch", text: "ARCH?" }), " Open architect question"), h("span", null, h("b", { class: "logmark", style: "margin:0", text: "LOG" }), " Daily log written"));
   }
@@ -643,9 +674,14 @@ button { cursor: pointer; }
           class: "cell" + (day.getMonth() !== m ? " out" : "") + (di === today ? " today" : "") + (di < today ? " past" : ""),
           style: `grid-column:${d + 1}`, "aria-label": `${fmtDay(di)}, open day`,
           onclick: () => openDay(di)
-        }, h("span", { class: "num", text: day.getDate() }), logsOn(di).length ? h("span", { class: "logmark", title: "Daily log written", text: "LOG" }) : null));
+        }, h("span", { class: "num", text: day.getDate() }),
+          (() => { const ins = tasks.filter(t => isInsp(t) && t.start === di); if (!ins.length) return null;
+            const rank = t => t.inspResult === "fail" ? 0 : t.inspResult === "pass" ? 2 : 1;
+            ins.sort((a, b) => rank(a) - rank(b));
+            return h("span", { class: "idots" }, ins.map(t => inspDot(t.inspResult, `${t.title || "Inspection"}: ${INSP[t.inspResult] || "Pending"}${(S.projects.get(t.projectId) || {}).name ? " · " + S.projects.get(t.projectId).name : ""}`, () => openTaskForm(t))), ins.length > 1 ? h("span", { class: "imore", title: `${ins.length} inspections`, text: `+${ins.length - 1}` }) : null); })(),
+          logsOn(di).length ? h("span", { class: "logmark", title: "Daily log written", text: "LOG" }) : null));
       }
-      const items = tasks.filter(t => t.start <= weI && endOf(t) >= wsI)
+      const items = tasks.filter(t => !isInsp(t) && t.start <= weI && endOf(t) >= wsI)
         .sort((a, b) => a.start.localeCompare(b.start) || endOf(b).localeCompare(endOf(a)) || (a.title || "").localeCompare(b.title || ""));
       const laneEnd = [], hidden = Array(7).fill(0);
       for (const t of items) {

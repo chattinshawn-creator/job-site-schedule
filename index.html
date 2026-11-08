@@ -204,6 +204,13 @@ button { cursor: pointer; }
 .ropt span { display: grid; gap: 1px; }
 .ropt small { color: var(--muted); font-size: 12px; }
 .sheet.wide { width: min(780px, 100%); }
+.rec { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 9px; flex-wrap: wrap; }
+.rec.open { border-color: var(--accent); }
+.rec-main { display: grid; gap: 6px; min-width: 0; flex: 1 1 260px; font-size: 13.5px; }
+.rec-top { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.rec-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.rec-tags .pill { margin-left: 0; }
+.rec-acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .sheet-grip { position: absolute; left: -5px; top: 0; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; z-index: 3; }
 .sheet-grip::after { content: ""; position: absolute; left: 4px; top: 50%; height: 44px; margin-top: -22px; width: 4px; border-radius: 3px; background: var(--muted); opacity: .35; transition: opacity .12s, height .12s; }
 .sheet-grip:hover::after, .sheet.resizing .sheet-grip::after { opacity: .8; height: 72px; margin-top: -36px; }
@@ -1369,6 +1376,107 @@ button { cursor: pointer; }
     if (!moveMode) paint();
   }
 
+  // ---------- change records (fix or delete stats) ----------
+  const CHANGE_TYPE = { delay: "Unexpected delay", early: "Unexpected early start", planned: "Planned change", overrun: "Unexpected cost increase", savings: "Unexpected savings" };
+  const sameEntry = (a, b) => a && b && a.at === b.at && a.kind === b.kind;
+  function tiedName(e) {
+    return e.tiedTo === "coordinator" ? `Project coordinator${e.coordinator ? " · " + e.coordinator : ""}`
+      : e.tiedTo === "lead" ? `Project lead${e.lead ? " · " + e.lead : ""}`
+      : e.tiedTo === "squad" ? `Squadron leader${e.squadLeader ? " · " + e.squadLeader : ""}`
+      : ROLE_TXT[e.tiedTo] || "";
+  }
+  async function saveHistory(t, mutate, msg) {
+    const cur = S.tasks.get(t.id);
+    if (!cur) { toast("That job was deleted."); return false; }
+    const hist = Array.isArray(cur.history) ? cur.history.slice() : [];
+    const upd = mutate(hist, cur);
+    if (!upd) { toast("That record changed or was already removed. Check the list and try again."); return false; }
+    return write(() => S.db.doc("tasks/" + t.id).update({ ...upd, ...stamp() }), msg);
+  }
+
+  function openRecords(startProj) {
+    let proj = startProj && S.projects.has(startProj) ? startProj : (sortedProjects()[0] || {}).id || "";
+    let editing = null; // "taskId|at|kind"
+    const draw = () => {
+      const projSel = h("select", { class: "select", id: "rc-proj", "aria-label": "Project" }, sortedProjects().map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
+      projSel.value = proj;
+      projSel.addEventListener("change", () => { proj = projSel.value; editing = null; draw(); });
+      const recs = [...S.tasks.values()].filter(t => t.projectId === proj && Array.isArray(t.history))
+        .flatMap(t => t.history.map(e => ({ t, e }))).filter(r => r.e && r.e.at)
+        .sort((a, b) => b.e.at.localeCompare(a.e.at));
+      const rows = recs.map(({ t, e }) => {
+        const key = `${t.id}|${e.at}|${e.kind}`;
+        const when = new Date(e.at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        const what = e.kind === "budget"
+          ? `Budget ${money(e.from)} → ${money(e.to)} (${e.amount > 0 ? "+" : "−"}${money(Math.abs(e.amount || 0))})`
+          : `Dates ${rangeTxt(e.from.start, e.from.end)} → ${rangeTxt(e.to.start, e.to.end)} (${plural(e.days || 0, "day")})`;
+        const row = h("div", { class: "rec" });
+        const summary = h("div", { class: "rec-main" },
+          h("div", { class: "rec-top" }, h("b", { text: t.title || "Untitled work" }), h("span", { class: "hint", text: `${when} · by ${personName(e.by)}` })),
+          h("div", { text: what }),
+          h("div", { class: "rec-tags" },
+            h("span", { class: "pill " + (e.type === "planned" ? "scheduled" : e.type === "delay" || e.type === "overrun" ? "delayed" : "progress"), text: CHANGE_TYPE[e.type] || e.type || "Unknown" }),
+            e.tiedTo ? h("span", { class: "chip", text: tiedName(e) }) : null),
+          e.reason ? h("div", { class: "hint", text: "Reason: " + e.reason }) : null,
+          e.editedBy ? h("div", { class: "hint", text: `Corrected by ${personName(e.editedBy)}` }) : null);
+        if (!S.canWrite || !S.db) { row.append(summary); return row; }
+        if (editing === key) {
+          const typeOpts = e.kind === "budget" ? [["overrun", CHANGE_TYPE.overrun], ["savings", CHANGE_TYPE.savings], ["planned", "Planned change", "Not counted in the stats"]]
+            : [["delay", CHANGE_TYPE.delay], ["early", CHANGE_TYPE.early], ["planned", "Planned change", "Not counted in the stats"]];
+          const tyG = radioGroup("rc-type", typeOpts, e.type);
+          const tiG = radioGroup("rc-tied", [["coordinator", "Project coordinator", e.coordinator || ""], ["lead", "Project lead", e.lead || ""], ["squad", "Squadron leader", e.squadLeader || ""],
+            ["both", "Coordinator and lead"], ["disputed", "Disputed", "Coordinator and lead disagree on who's at fault"], ["neither", "Neither", "Outside cause"]], e.tiedTo);
+          const tiW = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to" }), tiG);
+          tiW.hidden = e.type === "planned";
+          tyG.addEventListener("change", () => { tiW.hidden = tyG.val() === "planned"; });
+          const rs = h("textarea", { id: "rc-reason", rows: "2", value: e.reason || "" });
+          const err = h("div", { class: "err", role: "alert" });
+          const save = h("button", { class: "btn primary", type: "button" }, "Save correction");
+          save.addEventListener("click", async () => {
+            const ty = tyG.val(), ti = tiG.val();
+            if (ty !== "planned" && !ti) { err.textContent = "Pick who this change is tied to."; return; }
+            save.disabled = true;
+            const ok = await saveHistory(t, hist => {
+              const i = hist.findIndex(x => sameEntry(x, e)); if (i < 0) return null;
+              hist[i] = Object.assign({}, hist[i], { type: ty, tiedTo: ty === "planned" ? "" : ti, reason: rs.value.trim(), editedBy: S.me || "Someone", editedAt: new Date().toISOString() });
+              return { history: hist };
+            }, "Record corrected");
+            if (ok) { editing = null; draw(); } else save.disabled = false;
+          });
+          row.classList.add("open");
+          row.append(h("div", { class: "rec-main" }, h("b", { text: t.title || "Untitled work" }), h("div", { text: what }),
+            h("div", { class: "field" }, h("span", { class: "lbl", text: "What kind of change?" }), tyG), tiW, field("Reason", rs, "rc-reason"), err,
+            h("div", { class: "proj-actions" }, save, h("button", { class: "btn", type: "button", onclick: () => { editing = null; draw(); } }, "Cancel"))));
+          return row;
+        }
+        const acts = h("div", { class: "rec-acts" });
+        const normal = () => acts.replaceChildren(
+          h("button", { class: "btn", type: "button", onclick: () => { editing = key; draw(); } }, "Fix"),
+          h("button", { class: "btn danger", type: "button", onclick: confirmDel }, "Delete"));
+        const confirmDel = () => acts.replaceChildren(
+          h("span", { class: "hint", text: "Delete this record from the stats?" }),
+          h("button", { class: "btn danger solid", type: "button", onclick: () => saveHistory(t, (hist, cur) => {
+            const i = hist.findIndex(x => sameEntry(x, e)); if (i < 0) return null;
+            const [gone] = hist.splice(i, 1);
+            const removed = (Array.isArray(cur.historyRemoved) ? cur.historyRemoved : []).concat([Object.assign({}, gone, { removedBy: S.me || "Someone", removedAt: new Date().toISOString() })]);
+            return { history: hist, historyRemoved: removed };
+          }, "Record deleted") }, "Yes, delete"),
+          h("button", { class: "btn", type: "button", onclick: normal }, "Keep"));
+        normal();
+        row.append(summary, acts);
+        return row;
+      });
+      const removedCount = [...S.tasks.values()].filter(t => t.projectId === proj).reduce((n, t) => n + (Array.isArray(t.historyRemoved) ? t.historyRemoved.length : 0), 0);
+      openSheet("Clear project statistics", h("div", { class: "sheet-b" },
+        h("p", { class: "hint", text: "Every schedule or budget change saved through the change pop-up is listed here. Fix a record that was entered wrong, or delete it so it no longer counts in Stats." }),
+        S.projects.size ? h("div", { class: "controls" }, projSel) : null,
+        rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "No change records for this project yet." }),
+        removedCount ? h("div", { class: "hint", text: `${plural(removedCount, "record")} deleted from this project so far. Deleted records are kept with each job for reference but don't count in Stats.` }) : null),
+        h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: openStats }, "Back to Stats")), draw);
+    };
+    draw();
+  }
+
   // ---------- stats ----------
   function openStats() {
     let proj = S.project, period = "all";
@@ -1479,7 +1587,9 @@ button { cursor: pointer; }
           tile("Unexpected cost increases", String(over.length), money(sum(over, e => Math.abs(e.amount))) + " added", over.length ? "alert" : ""),
           tile("Unexpected savings", String(save.length), money(sum(save, e => Math.abs(e.amount))) + " saved")),
         tbl(["Tied to", "Increases", "Amount", "Savings", "Amount"], bRows, "No unexpected budget changes in this period."));
-      openSheet("Stats", body, null, draw, true);
+      const foot = (S.canWrite && S.db) ? h("div", { class: "sheet-f" },
+        h("button", { class: "btn", type: "button", onclick: () => openRecords(proj !== "all" ? proj : S.project) }, "Clear a project's statistics")) : null;
+      openSheet("Stats", body, foot, draw, true);
     };
     draw();
   }

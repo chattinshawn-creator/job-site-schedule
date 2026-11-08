@@ -1409,14 +1409,23 @@ button { cursor: pointer; }
     return write(() => S.db.doc("tasks/" + t.id).update({ ...upd, ...stamp() }), msg);
   }
 
-  function openRecords(startProj) {
-    let proj = startProj && S.projects.has(startProj) ? startProj : (sortedProjects()[0] || {}).id || "";
+  function openRecords(startProj, startJob) {
+    const sj = startJob && S.tasks.get(startJob);
+    let proj = sj ? sj.projectId : startProj && S.projects.has(startProj) ? startProj : (sortedProjects()[0] || {}).id || "";
+    let job = sj ? sj.id : "";
     let editing = null; // "taskId|at|kind"
     const draw = () => {
       const projSel = h("select", { class: "select", id: "rc-proj", "aria-label": "Project" }, sortedProjects().map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
       projSel.value = proj;
-      projSel.addEventListener("change", () => { proj = projSel.value; editing = null; draw(); });
-      const recs = [...S.tasks.values()].filter(t => t.projectId === proj && Array.isArray(t.history))
+      projSel.addEventListener("change", () => { proj = projSel.value; job = ""; editing = null; draw(); });
+      const recCount = t => (Array.isArray(t.history) ? t.history.length : 0);
+      const jobList = [...S.tasks.values()].filter(t => t.projectId === proj && (recCount(t) || t.id === job)).sort((a, b) => a.start.localeCompare(b.start));
+      if (!jobList.some(t => t.id === job)) job = (jobList[0] || {}).id || "";
+      const jobSel = h("select", { class: "select", id: "rc-job", "aria-label": "Job", style: "flex:1 1 220px;min-width:0" },
+        jobList.map(t => h("option", { value: t.id, text: `${fmtShort(t.start)} · ${(TRADE[t.trade] || TRADE.other).code} · ${t.title || "Untitled"} (${plural(recCount(t), "record")})` })));
+      jobSel.value = job;
+      jobSel.addEventListener("change", () => { job = jobSel.value; editing = null; draw(); });
+      const recs = [...S.tasks.values()].filter(t => t.id === job && Array.isArray(t.history))
         .flatMap(t => t.history.map(e => ({ t, e }))).filter(r => r.e && r.e.at)
         .sort((a, b) => b.e.at.localeCompare(a.e.at));
       const rows = recs.map(({ t, e }) => {
@@ -1481,12 +1490,13 @@ button { cursor: pointer; }
         row.append(summary, acts);
         return row;
       });
-      const removedCount = [...S.tasks.values()].filter(t => t.projectId === proj).reduce((n, t) => n + (Array.isArray(t.historyRemoved) ? t.historyRemoved.length : 0), 0);
-      openSheet("Clear project statistics", h("div", { class: "sheet-b" },
-        h("p", { class: "hint", text: "Every schedule or budget change saved through the change pop-up is listed here. Fix a record that was entered wrong, or delete it so it no longer counts in Stats." }),
-        S.projects.size ? h("div", { class: "controls" }, projSel) : null,
-        rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "No change records for this project yet." }),
-        removedCount ? h("div", { class: "hint", text: `${plural(removedCount, "record")} deleted from this project so far. Deleted records are kept with each job for reference but don't count in Stats.` }) : null),
+      const removedCount = [...S.tasks.values()].filter(t => t.id === job).reduce((n, t) => n + (Array.isArray(t.historyRemoved) ? t.historyRemoved.length : 0), 0);
+      openSheet("Clear job statistics", h("div", { class: "sheet-b" },
+        h("p", { class: "hint", text: "Pick a job to see every schedule or budget change saved for it. Fix a record that was entered wrong, or delete it so it no longer counts in Stats." }),
+        S.projects.size ? h("div", { class: "controls" }, projSel, jobList.length ? jobSel : null) : null,
+        !jobList.length ? h("div", { class: "hint", text: "No jobs in this project have change records yet." })
+          : rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "This job has no change records left." }),
+        removedCount ? h("div", { class: "hint", text: `${plural(removedCount, "record")} deleted from this job so far. Deleted records are kept with each job for reference but don't count in Stats.` }) : null),
         h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: openStats }, "Back to Stats")), draw);
     };
     draw();
@@ -1605,7 +1615,7 @@ button { cursor: pointer; }
           tile("Unexpected savings", String(save.length), money(sum(save, e => Math.abs(e.amount))) + " saved")),
         tbl(["Tied to", "Increases", "Amount", "Savings", "Amount"], bRows, "No unexpected budget changes in this period."));
       const foot = (S.canWrite && S.db) ? h("div", { class: "sheet-f" },
-        h("button", { class: "btn", type: "button", onclick: () => openRecords(proj !== "all" ? proj : S.project) }, "Clear a project's statistics")) : null;
+        h("button", { class: "btn", type: "button", onclick: () => openRecords(proj !== "all" ? proj : S.project) }, "Clear a job's statistics")) : null;
       openSheet("Stats", body, foot, draw, true);
     };
     draw();
@@ -1921,6 +1931,11 @@ button { cursor: pointer; }
     const noun = inspForm ? "inspection" : "work";
     openSheet(editing ? (ro ? (inspForm ? "Inspection" : "Work item") : "Edit " + noun) : (defaults && defaults.title ? "Duplicate " + noun : "Add " + noun), body, foot, null);
 
+    if (editing && !ro && Array.isArray(t.history) && t.history.length) {
+      meta.after(h("div", { class: "proj-actions" },
+        h("span", { class: "hint", text: `This job has ${plural(t.history.length, "change record")} in Stats.` }),
+        h("button", { class: "btn", type: "button", onclick: () => openRecords(null, t.id) }, "Review or clear")));
+    }
     if (editing && (t.updatedBy || t.createdBy)) {
       {
         const nm = personName;

@@ -204,6 +204,12 @@ button { cursor: pointer; }
 .ropt span { display: grid; gap: 1px; }
 .ropt small { color: var(--muted); font-size: 12px; }
 .sheet.wide { width: min(780px, 100%); }
+.sheet-grip { position: absolute; left: -5px; top: 0; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; z-index: 3; }
+.sheet-grip::after { content: ""; position: absolute; left: 4px; top: 50%; height: 44px; margin-top: -22px; width: 4px; border-radius: 3px; background: var(--muted); opacity: .35; transition: opacity .12s, height .12s; }
+.sheet-grip:hover::after, .sheet.resizing .sheet-grip::after { opacity: .8; height: 72px; margin-top: -36px; }
+.sheet.resizing { transition: none; user-select: none; }
+.sheet-h .acts { display: flex; gap: 6px; }
+@media (max-width: 720px) { .sheet-grip, .btn-expand { display: none !important; } .sheet { width: 100% !important; } }
 .sheet-b { grid-template-columns: minmax(0, 1fr); }
 .sheet-b p { margin: 0; }
 .sheet.wide .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -879,13 +885,45 @@ button { cursor: pointer; }
   }
 
   // ---------- sheet ----------
+  const MIN_SHEET = 380;
+  const savedSheetW = () => { const v = Number(recall("sheetW", "")); return isFinite(v) && v >= MIN_SHEET ? v : 0; };
+  function applySheetW() {
+    const sh = $("sheet"), w = savedSheetW();
+    sh.style.width = w ? `min(${Math.min(w, window.innerWidth - 24)}px, 100%)` : "";
+    const b = sh.querySelector(".btn-expand");
+    if (b) { const big = w && w >= window.innerWidth * 0.8; b.textContent = big ? "⇥" : "⇤"; b.title = big ? "Shrink panel" : "Expand panel"; b.setAttribute("aria-label", b.title); }
+  }
+  function toggleSheetW() {
+    const w = savedSheetW();
+    if (w && w >= window.innerWidth * 0.8) store("sheetW", ""); else store("sheetW", String(Math.round(window.innerWidth * 0.92)));
+    applySheetW();
+  }
+  function startSheetResize(e) {
+    e.preventDefault();
+    const sh = $("sheet"); sh.classList.add("resizing");
+    const move = ev => {
+      const w = Math.max(MIN_SHEET, Math.min(window.innerWidth - 24, window.innerWidth - ev.clientX));
+      sh.style.width = w + "px";
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
+      sh.classList.remove("resizing");
+      const w = Math.round(sh.getBoundingClientRect().width);
+      store("sheetW", String(w)); applySheetW();
+    };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+  }
   function openSheet(title, body, foot, refresh, wide) {
     const sh = $("sheet");
     sh.classList.toggle("wide", !!wide);
     sh.setAttribute("aria-label", title);
     sh.replaceChildren(
-      h("div", { class: "sheet-h" }, h("h2", { text: title }), h("button", { class: "btn icon", type: "button", "aria-label": "Close", onclick: closeSheet, text: "×" })),
+      h("div", { class: "sheet-grip", title: "Drag to resize", "aria-hidden": "true", onpointerdown: startSheetResize, ondblclick: toggleSheetW }),
+      h("div", { class: "sheet-h" }, h("h2", { text: title }), h("div", { class: "acts" },
+        h("button", { class: "btn icon btn-expand", type: "button", onclick: toggleSheetW }),
+        h("button", { class: "btn icon", type: "button", "aria-label": "Close", onclick: closeSheet, text: "×" }))),
       ...[body, foot].filter(Boolean));
+    applySheetW();
     $("overlay").hidden = false;
     S.sheetRefresh = refresh || null;
     const f = sh.querySelector("input:not([type=checkbox]):not([type=radio]), textarea, select");
@@ -1905,6 +1943,7 @@ button { cursor: pointer; }
   $("btn-add").addEventListener("click", () => openTaskForm(null, {}));
   $("btn-projects").addEventListener("click", openProjects);
   $("btn-stats").addEventListener("click", openStats);
+  window.addEventListener("resize", () => { if (!$("overlay").hidden) applySheetW(); });
   $("cscrim").addEventListener("click", () => { if (S.cmodalCancel) S.cmodalCancel(); });
   $("btn-export").addEventListener("click", exportXlsx);
   $("btn-lock").addEventListener("click", () => S.canWrite ? lockDevice() : openUnlock());

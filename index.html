@@ -179,6 +179,9 @@ button { cursor: pointer; }
 .hdl.l::after { left: 2px; } .hdl.r::after { right: 2px; }
 .bar:hover .hdl::after, .hdl:active::after { opacity: .55; }
 @media (hover: none) { .hdl::after { opacity: .35; } .hdl { width: 12px; } }
+.bar.movable { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.bar.moving { cursor: grabbing; opacity: .55; }
+.bar.armed { outline: 2px solid var(--accent); outline-offset: 1px; }
 .cell.drag-on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .draglbl { position: fixed; z-index: 45; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 #cmodal .scrim { z-index: 30; }
@@ -729,10 +732,12 @@ button { cursor: pointer; }
         const tr = TRADE[t.trade] || TRADE.other;
         row.append(h("button", {
           type: "button",
-          class: `bar t-${TRADE[t.trade] ? t.trade : "other"} st-${effSt(t)}` + (t.start < wsI ? " cl" : "") + (endOf(t) > weI ? " cr" : ""),
+          class: `bar t-${TRADE[t.trade] ? t.trade : "other"} st-${effSt(t)}` + (S.canWrite && S.db ? " movable" : "") + (t.start < wsI ? " cl" : "") + (endOf(t) > weI ? " cr" : ""),
           style: `grid-row:${lane + 2};grid-column:${cs + 1} / ${ce + 2}`,
           title: `${tr.label}: ${t.title || "Untitled"} (${spanLabel(t)})` + (isInsp(t) ? ` · ${INSP[t.inspResult] || "Pending"}` : ""),
-          onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); }
+          onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); },
+          onpointerdown: (S.canWrite && S.db) ? e => { if (!e.target.closest(".hdl")) startDrag(e, t, "move"); } : null,
+          oncontextmenu: (S.canWrite && S.db) ? e => { if (e.pointerType !== "mouse") e.preventDefault(); } : null
         },
           (S.canWrite && S.db && t.start >= wsI) ? h("span", { class: "hdl l", title: "Drag to change the start date", onpointerdown: e => startDrag(e, t, "start"), onclick: e => e.stopPropagation() }) : null,
           (S.canWrite && S.db && endOf(t) <= weI) ? h("span", { class: "hdl r", title: "Drag to change the end date", onpointerdown: e => startDrag(e, t, "end"), onclick: e => e.stopPropagation() }) : null,
@@ -1188,38 +1193,74 @@ button { cursor: pointer; }
   // ---------- drag to resize ----------
   function startDrag(e, t, edge) {
     if (e.button !== undefined && e.button !== 0) return;
-    e.preventDefault(); e.stopPropagation();
+    const moveMode = edge === "move";
+    const isTouch = e.pointerType === "touch";
+    if (!moveMode) { e.preventDefault(); e.stopPropagation(); }
+    const cellAt = (x, y) => { const el = document.elementsFromPoint(x, y).find(c => c.classList && c.classList.contains("cell") && c.dataset.date); return el ? el.dataset.date : null; };
     const os = t.start, oe = endOf(t);
     let ns = os, ne = oe;
+    const anchor = moveMode ? cellAt(e.clientX, e.clientY) : null;
+    if (moveMode && !anchor) return;
+    const bar = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest(".bar") : null;
+    const x0 = e.clientX, y0 = e.clientY;
+    let armed = !(moveMode && isTouch);   // on touch, press and hold before moving so normal scrolling still works
+    let active = !moveMode;               // a move only starts once the job has shifted at least a day
+    let holdTimer = null;
     const lbl = $("draglbl");
     const paint = () => document.querySelectorAll(".cell[data-date]").forEach(c => c.classList.toggle("drag-on", c.dataset.date >= ns && c.dataset.date <= ne));
-    const move = ev => {
-      const el = document.elementsFromPoint(ev.clientX, ev.clientY).find(x => x.classList && x.classList.contains("cell") && x.dataset.date);
-      if (el) {
-        const di = el.dataset.date;
-        if (edge === "start") ns = di > oe ? oe : di; else ne = di < os ? os : di;
-      }
-      paint();
+    const showLabel = ev => {
       const n = dayDiff(parse(ns), parse(ne)) + 1;
-      lbl.textContent = `${rangeTxt(ns, ne)} · ${plural(n, "day")}`;
+      const off = dayDiff(parse(os), parse(ns));
+      lbl.textContent = `${rangeTxt(ns, ne)} · ${plural(n, "day")}` + (moveMode && off ? ` · ${off > 0 ? "+" : "−"}${plural(Math.abs(off), "day")}` : "");
       lbl.hidden = false;
       lbl.style.left = Math.min(window.innerWidth - lbl.offsetWidth - 8, Math.max(8, ev.clientX + 12)) + "px";
-      lbl.style.top = Math.max(8, ev.clientY - 38) + "px";
+      lbl.style.top = Math.max(8, ev.clientY - 44) + "px";
     };
-    const end = () => {
+    const blockTouch = ev => { if (armed && moveMode) ev.preventDefault(); };
+    const move = ev => {
+      if (!armed) {
+        if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 8) cleanup();
+        return;
+      }
+      const di = cellAt(ev.clientX, ev.clientY);
+      if (di) {
+        if (edge === "start") ns = di > oe ? oe : di;
+        else if (edge === "end") ne = di < os ? os : di;
+        else {
+          const off = dayDiff(parse(anchor), parse(di));
+          ns = iso(addDays(parse(os), off)); ne = iso(addDays(parse(oe), off));
+          if (off !== 0 && !active) { active = true; if (bar) bar.classList.add("moving"); }
+        }
+      }
+      if (!active) return;
+      paint(); showLabel(ev);
+    };
+    const cleanup = () => {
+      clearTimeout(holdTimer);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("touchmove", blockTouch);
       lbl.hidden = true;
+      if (bar) bar.classList.remove("moving", "armed");
       document.querySelectorAll(".cell.drag-on").forEach(c => c.classList.remove("drag-on"));
-      S.suppressClick = true; setTimeout(() => { S.suppressClick = false; }, 60);
-      if (ns !== os || ne !== oe) commitDates(t, ns, ne);
     };
-    const cancel = () => { ns = os; ne = oe; end(); };
+    const end = () => {
+      cleanup();
+      if (active || (moveMode && isTouch && armed)) { S.suppressClick = true; setTimeout(() => { S.suppressClick = false; }, 80); }
+      if (active && (ns !== os || ne !== oe)) commitDates(t, ns, ne);
+    };
+    const cancel = () => { ns = os; ne = oe; active = false; cleanup(); };
+    if (!armed) holdTimer = setTimeout(() => {
+      armed = true;
+      if (bar) bar.classList.add("armed");
+      try { navigator.vibrate && navigator.vibrate(12); } catch (err) {}
+    }, 350);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", cancel);
-    paint();
+    window.addEventListener("touchmove", blockTouch, { passive: false });
+    if (!moveMode) paint();
   }
 
   // ---------- stats ----------

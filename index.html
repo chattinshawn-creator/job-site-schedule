@@ -182,6 +182,14 @@ button { cursor: pointer; }
 .bar.movable { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .bar.moving { cursor: grabbing; opacity: .55; }
 .bar.armed { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px; min-height: 42px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); }
+.chips:focus-within { outline: 2px solid var(--accent); border-color: var(--accent); }
+.chip-n { display: inline-flex; align-items: center; gap: 2px; padding: 3px 4px 3px 9px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; font-weight: 500; max-width: 100%; overflow-wrap: anywhere; }
+.chip-n button { border: 0; background: transparent; color: var(--muted); font-size: 15px; line-height: 1; width: 22px; height: 22px; border-radius: 50%; }
+.chip-n button:hover { color: var(--danger); }
+.chips input { flex: 1 1 140px; min-width: 120px; border: 0 !important; background: transparent !important; outline: none !important; min-height: 30px !important; padding: 4px !important; }
+.team { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.team b { color: var(--ink); font-weight: 600; }
 .cell.drag-on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .draglbl { position: fixed; z-index: 45; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 #cmodal .scrim { z-index: 30; }
@@ -763,7 +771,16 @@ button { cursor: pointer; }
     const waits = isDone(t) ? [] : waitingOn(t);
     const visit = (lbl, time, who, n) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
       [fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set");
-    const who = isInsp(t) ? (INSP_TYPE[t.inspType] || "Inspection") : (t.crew === "sub" ? "Sub" : "In-house") + (t.assignee ? " · " + t.assignee : "");
+    const who = isInsp(t) ? (INSP_TYPE[t.inspType] || "Inspection") : (t.crew === "sub" ? "Sub" : "In-house");
+    const ws = workersOf(t);
+    const teamLine = isInsp(t) ? null : (() => {
+      const bits = [];
+      if (jobLead(t)) bits.push([ "Lead ", jobLead(t) ]);
+      if (t.squadLeader) bits.push([ "Squad ", t.squadLeader ]);
+      if (ws.length) bits.push([ "Workers ", ws.join(", ") ]);
+      if (!bits.length) return null;
+      return h("div", { class: "team" }, bits.flatMap(([k, v], i) => [i ? " · " : "", k, h("b", { text: v })]));
+    })();
     const wo = h("label", { class: "wo " + (t.workOrder ? "has" : "missing"), onclick: e => e.stopPropagation() },
       h("input", {
         type: "checkbox", checked: !!t.workOrder, disabled: !S.canWrite || !S.db, "aria-label": "Work order created",
@@ -786,6 +803,7 @@ button { cursor: pointer; }
         t.archQ ? h("span", { class: "chip arch" + (archOpen(t) ? "" : " ok"), text: archOpen(t) ? "Architect question open" : "Architect answered" }) : null,
         h("span", { class: "pill " + st, text: isInsp(t) ? "Inspection " + (INSP[t.inspResult] || "Pending").toLowerCase() : STATUS[st] })),
       h("div", { class: "card-title", text: t.title || "Untitled work" }),
+      teamLine,
       h("div", { class: "card-meta" }, (p && p.name) || "No project", " · ", spanLabel(t), overdue ? h("span", { class: "late", text: " · Past deadline" }) : null),
       waits.length ? h("div", { class: "waitline" }, "Waiting on: " + waits.map(x => `${(TRADE[x.trade] || TRADE.other).code} ${x.title || "Untitled"} (${depState(x)})`).join("; ")) : null,
       (() => {
@@ -1044,8 +1062,8 @@ button { cursor: pointer; }
     const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
     const pn = id => (S.projects.get(id) || {}).name || "";
     const yn = v => v ? "Yes" : "No";
-    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Crew / Sub name", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
-    const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", t.assignee || "", t.start, endOf(t),
+    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Project coordinator", "Project lead", "Squadron leader", "Approved workers", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
+    const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", isInsp(t) ? "" : jobCoord(t), isInsp(t) ? "" : jobLead(t), t.squadLeader || "", workersOf(t).join(", "), t.start, endOf(t),
       STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget), numOrNull(t.actualCost) ?? "",
       matList(t).map(m => `${lineText(m)} - ${lineStatus(m)}`).join("; "),
       matList(t).length ? `${matList(t).filter(m => m.status === "delivered").length} of ${matList(t).length}` : "",
@@ -1057,15 +1075,15 @@ button { cursor: pointer; }
       t.archQ ? (archOpen(t) ? "Open" : "Answered") : "No", t.archQ ? (t.archText || "") : "", t.archQ ? (t.archA || "") : "", t.archQ ? (t.archAnsweredAt || "") : "",
       t.notes || ""]);
     const total = items.reduce((s, t) => s + (Number(t.budget) || 0), 0);
-    const ws1 = XLSX.utils.aoa_to_sheet([head, ...rows, [], ["Totals", "", "", "", "", "", "", "", "", total, items.reduce((s, t) => s + (numOrNull(t.actualCost) || 0), 0)]]);
+    const ws1 = XLSX.utils.aoa_to_sheet([head, ...rows, [], ["Totals", "", "", "", "", "", "", "", "", "", "", "", total, items.reduce((s, t) => s + (numOrNull(t.actualCost) || 0), 0)]]);
     ws1["!cols"] = head.map(x => ({ wch: ["Work to be done", "Materials", "Media: what to capture", "Notes"].includes(x) ? 40 : x === "Project" ? 24 : 16 }));
-    const chead = ["Changed on", "Changed by", "Project", "Work to be done", "What changed", "From", "To", "Days / amount", "Type", "Tied to", "Coordinator", "Lead", "Reason"];
+    const chead = ["Changed on", "Changed by", "Project", "Work to be done", "What changed", "From", "To", "Days / amount", "Type", "Tied to", "Coordinator", "Lead", "Squadron leader", "Reason"];
     const TYPE_TXT = { delay: "Unexpected delay", early: "Unexpected early start", planned: "Planned", overrun: "Unexpected cost increase", savings: "Unexpected savings" };
     const crows = items.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => [
       (e.at || "").slice(0, 10), e.by || "", pn(t.projectId), t.title || "",
       e.kind === "budget" ? "Budget" : "Dates",
       e.kind === "budget" ? e.from : `${e.from.start} to ${e.from.end}`, e.kind === "budget" ? e.to : `${e.to.start} to ${e.to.end}`,
-      e.kind === "budget" ? e.amount : e.days, TYPE_TXT[e.type] || e.type || "", ROLE_TXT[e.tiedTo] || "", e.coordinator || "", e.lead || "", e.reason || ""]));
+      e.kind === "budget" ? e.amount : e.days, TYPE_TXT[e.type] || e.type || "", ROLE_TXT[e.tiedTo] || "", e.coordinator || "", e.lead || "", e.squadLeader || "", e.reason || ""]));
     const ws4 = XLSX.utils.aoa_to_sheet([chead, ...crows]);
     ws4["!cols"] = chead.map(x => ({ wch: ["Work to be done", "Reason"].includes(x) ? 40 : 18 }));
     const logs = [...S.logs.values()].filter(l => l.date >= A && l.date <= B && (S.project === "all" || l.projectId === S.project)).sort((x, y) => x.date.localeCompare(y.date) || pn(x.projectId).localeCompare(pn(y.projectId)));
@@ -1093,12 +1111,60 @@ button { cursor: pointer; }
     } catch (e) { toast("The spreadsheet couldn't be downloaded on this device."); }
   }
 
+  // ---------- people ----------
+  const workersOf = t => Array.isArray(t.workers) ? t.workers.filter(Boolean)
+    : (t.assignee ? String(t.assignee).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean) : []);
+  const jobCoord = t => (t.coordinator != null ? t.coordinator : (S.projects.get(t.projectId) || {}).coordinator || "").trim();
+  const jobLead = t => (t.lead != null ? t.lead : (S.projects.get(t.projectId) || {}).lead || "").trim();
+  function knownNames() {
+    const set = new Map();
+    const add = n => { n = (n || "").trim(); if (n && !/^u_[A-Za-z0-9_-]{10,}$/.test(n) && !set.has(n.toLowerCase())) set.set(n.toLowerCase(), n); };
+    for (const p of S.projects.values()) { add(p.coordinator); add(p.lead); }
+    for (const t of S.tasks.values()) { add(t.coordinator); add(t.lead); add(t.squadLeader); workersOf(t).forEach(add); }
+    add(S.me);
+    return [...set.values()].sort((a, b) => a.localeCompare(b));
+  }
+  function namesList() {
+    let dl = $("names-dl");
+    if (!dl) { dl = h("datalist", { id: "names-dl" }); document.body.append(dl); }
+    dl.replaceChildren(...knownNames().map(n => h("option", { value: n })));
+    return "names-dl";
+  }
+  function chipInput(id, names, ro, placeholder) {
+    let list = names.slice();
+    const wrap = h("div", { class: "chips" });
+    const inp = h("input", { type: "text", id, list: "names-dl", placeholder, autocomplete: "off", disabled: ro });
+    const draw = () => {
+      wrap.replaceChildren(...list.map((n, i) => h("span", { class: "chip-n" }, n,
+        ro ? null : h("button", { type: "button", "aria-label": "Remove " + n, onclick: () => { list.splice(i, 1); draw(); inp.focus(); } }, "×"))), ro ? null : inp);
+      if (ro && !list.length) wrap.append(h("span", { class: "hint", text: "None listed" }));
+    };
+    const commit = () => {
+      const parts = inp.value.split(/[,;]+/).map(x => x.trim()).filter(Boolean);
+      for (const n of parts) if (!list.some(x => x.toLowerCase() === n.toLowerCase())) list.push(n);
+      inp.value = ""; draw(); inp.focus();
+    };
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); if (inp.value.trim()) commit(); }
+      else if (e.key === "Backspace" && !inp.value && list.length) { list.pop(); draw(); inp.focus(); }
+    });
+    inp.addEventListener("input", e => {
+      // a pick from the suggestion list arrives as a non-typed input; add it right away
+      if (!e.inputType || e.inputType === "insertReplacementText") { if (knownNames().some(n => n === inp.value)) commit(); }
+    });
+    inp.addEventListener("blur", () => { if (inp.value.trim()) commit(); });
+    wrap.addEventListener("click", e => { if (e.target === wrap) inp.focus(); });
+    draw();
+    wrap.read = () => { if (inp.value.trim()) commit(); return list.slice(); };
+    return wrap;
+  }
+
   // ---------- schedule & budget changes ----------
   const numOrNull = v => (v === "" || v == null || !isFinite(Number(v))) ? null : Number(v);
   const plural = (n, w) => `${n} ${w}${Math.abs(n) === 1 ? "" : "s"}`;
   const rangeTxt = (a, b) => a === b ? fmtShort(a) : `${fmtShort(a)} to ${fmtShort(b)}`;
   const shiftTxt = (n, what) => n === 0 ? "" : `${what} ${plural(Math.abs(n), "day")} ${n > 0 ? "later" : "earlier"}`;
-  const ROLE_TXT = { coordinator: "Project coordinator", lead: "Project lead", both: "Both", neither: "Neither" };
+  const ROLE_TXT = { coordinator: "Project coordinator", lead: "Project lead", squad: "Squadron leader", both: "Coordinator and lead", disputed: "Disputed", neither: "Neither" };
 
   function radioGroup(name, opts, value) {
     const wrap = h("div", { class: "rgroup", role: "radiogroup" });
@@ -1114,7 +1180,7 @@ button { cursor: pointer; }
   // Resolves to an array of history entries (possibly empty), or null if the person backed out.
   function askChange(cur, nv) {
     const p = S.projects.get(cur.projectId) || {};
-    const coord = (p.coordinator || "").trim(), lead = (p.lead || "").trim();
+    const coord = jobCoord(cur), lead = jobLead(cur), squad = (cur.squadLeader || "").trim();
     const os = cur.start, oe = endOf(cur), ns = nv.start, ne = nv.end && nv.end >= nv.start ? nv.end : nv.start;
     const sS = dayDiff(parse(os), parse(ns)), eS = dayDiff(parse(oe), parse(ne));
     const dChanged = sS !== 0 || eS !== 0;
@@ -1125,7 +1191,9 @@ button { cursor: pointer; }
     return new Promise(resolve => {
       const box = $("cbox");
       const err = h("div", { class: "err", role: "alert" });
-      const tiedOpts = [["coordinator", "Project coordinator", coord || "No name set for this project"], ["lead", "Project lead", lead || "No name set for this project"], ["both", "Both"], ["neither", "Neither", "Outside cause (weather, owner, city…)"]];
+      const tiedOpts = [["coordinator", "Project coordinator", coord || "No name set for this job"], ["lead", "Project lead", lead || "No name set for this job"],
+        ["squad", "Squadron leader", squad || "No name set for this job"], ["both", "Coordinator and lead", "Both share it"],
+        ["disputed", "Disputed", "Coordinator and lead disagree on who's at fault"], ["neither", "Neither", "Outside cause (weather, owner, city…)"]];
       const parts = [];
       let dType, dTied, bType, bTied;
       if (dChanged) {
@@ -1157,7 +1225,7 @@ button { cursor: pointer; }
       save.addEventListener("click", () => {
         err.textContent = "";
         const out = [], at = new Date().toISOString(), r = reason.value.trim();
-        const base = { at, by: S.me || "Someone", coordinator: coord, lead, reason: r };
+        const base = { at, by: S.me || "Someone", coordinator: coord, lead, squadLeader: squad, reason: r };
         if (dChanged) {
           const ty = dType.val(), ti = dTied.val();
           if (!ty) { err.textContent = "Pick what kind of date change this was."; return; }
@@ -1274,7 +1342,9 @@ button { cursor: pointer; }
       const entries = jobs.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => Object.assign({ t }, e))).filter(e => e && e.at && inP(e.at.slice(0, 10)));
       const people = e => e.tiedTo === "coordinator" ? [[e.coordinator || "Unnamed", "Coordinator"]]
         : e.tiedTo === "lead" ? [[e.lead || "Unnamed", "Lead"]]
+        : e.tiedTo === "squad" ? [[e.squadLeader || "Unnamed", "Squadron leader"]]
         : e.tiedTo === "both" ? [[e.coordinator || "Unnamed", "Coordinator"], [e.lead || "Unnamed", "Lead"]]
+        : e.tiedTo === "disputed" ? [["Disputed (coordinator vs. lead)", ""]]
         : [["Not tied to anyone", ""]];
       const tbl = (head, rows, empty) => rows.length
         ? h("div", null, h("div", { class: "tscroll" }, h("table", { class: "stbl" }, h("thead", null, h("tr", null, head.map((x, i) => h("th", { class: i ? "n" : "", text: x })))),
@@ -1307,8 +1377,7 @@ button { cursor: pointer; }
       const stable = started.filter(t => !unexpected(t));
       const visP = {};
       for (const t of started) {
-        const p = S.projects.get(t.projectId) || {};
-        for (const [n, r] of [[p.coordinator, "Coordinator"], [p.lead, "Lead"]]) {
+        for (const [n, r] of [[jobCoord(t), "Coordinator"], [jobLead(t), "Lead"], [(t.squadLeader || "").trim(), "Squadron leader"]]) {
           if (!n) continue;
           const k = roleKey(n, r); const o = visP[k] || (visP[k] = { n: [], s: 0 });
           o.n.push(notice(t)); if (!unexpected(t)) o.s++;
@@ -1345,7 +1414,7 @@ button { cursor: pointer; }
 
       const body = h("div", { class: "sheet-b" },
         h("div", { class: "controls" }, projSel, perSel),
-        noNames ? h("div", { class: "banner", text: "This project is missing a coordinator or lead name. Add them in Projects so changes are credited to the right person." }) : null,
+        noNames ? h("div", { class: "banner", text: "This project is missing a coordinator or lead name. Add them in Projects (new jobs fill in from there) or on each job so changes are credited to the right person." }) : null,
 
         h("h3", { class: "sth", text: "Schedule changes" }),
         h("div", { class: "stats" },
@@ -1406,7 +1475,13 @@ button { cursor: pointer; }
     const newAddr = h("input", { type: "text", id: "f-np-addr", placeholder: "Address or notes (optional)", autocomplete: "off" });
     const newBox = h("div", { class: "newproj" }, field("New project name", newName, "f-np-name"), field("Address", newAddr, "f-np-addr"));
     newBox.hidden = d.projectId !== "__new";
-    projSel.addEventListener("change", () => { newBox.hidden = projSel.value !== "__new"; if (!newBox.hidden) newName.focus(); });
+    projSel.addEventListener("change", () => {
+      newBox.hidden = projSel.value !== "__new"; if (!newBox.hidden) newName.focus();
+      const was = projDef(lastProj), now = projDef(projSel.value);
+      if (!coordIn.value.trim() || coordIn.value.trim() === (was.coordinator || "")) coordIn.value = now.coordinator || "";
+      if (!leadIn.value.trim() || leadIn.value.trim() === (was.lead || "")) leadIn.value = now.lead || "";
+      lastProj = projSel.value;
+    });
 
     const title = h("textarea", { id: "f-title", rows: "2", placeholder: "What needs to be done (e.g. Frame second-floor bathroom wall)", value: d.title, disabled: ro });
     const inspForm = d.trade === "inspection";
@@ -1416,7 +1491,13 @@ button { cursor: pointer; }
     const crewSeg = h("div", { class: "radio-seg", role: "radiogroup", "aria-label": "In-house or sub" },
       ...[["inhouse", "In-house"], ["sub", "Sub"]].map(([v, l]) => h("label", null,
         h("input", { type: "radio", name: "crew", value: v, checked: d.crew === v, disabled: ro }), h("span", { text: l }))));
-    const assignee = h("input", { type: "text", id: "f-who", placeholder: "Crew member or subcontractor name", value: d.assignee || "", disabled: ro, autocomplete: "off" });
+    namesList();
+    const projDef = id => S.projects.get(id) || {};
+    const coordIn = h("input", { type: "text", id: "f-coord", list: "names-dl", placeholder: "Manages the calendar", value: t ? jobCoord(d) : (projDef(d.projectId).coordinator || ""), disabled: ro, autocomplete: "off" });
+    const leadIn = h("input", { type: "text", id: "f-lead", list: "names-dl", placeholder: "Runs the job on site", value: t ? jobLead(d) : (projDef(d.projectId).lead || ""), disabled: ro, autocomplete: "off" });
+    const squadIn = h("input", { type: "text", id: "f-squad", list: "names-dl", placeholder: "Leads the crew on this job", value: d.squadLeader || "", disabled: ro, autocomplete: "off" });
+    const workersIn = chipInput("f-workers", workersOf(d), ro, "Type a name, press Enter");
+    let lastProj = d.projectId;
     const start = h("input", { type: "date", id: "f-start", value: d.start, disabled: ro });
     const end = h("input", { type: "date", id: "f-end", value: d.end || "", disabled: ro });
     const actual = h("input", { type: "text", id: "f-actual", inputmode: "decimal", placeholder: "Fill in when done", value: d.actualCost == null || d.actualCost === "" ? "" : String(d.actualCost), disabled: ro, autocomplete: "off" });
@@ -1533,7 +1614,9 @@ button { cursor: pointer; }
       field("Project", projSel, "f-proj"), newBox,
       h("div", { class: "row2" }, tradeCell, crewCell, inspTypeCell),
       w(field("Work to be done", title, "f-title")),
-      w(field("Crew or subcontractor", assignee, "f-who")),
+      w(h("div", { class: "row2" }, field("Project coordinator", coordIn, "f-coord"), field("Project lead", leadIn, "f-lead"))),
+      w(field("Squadron leader", squadIn, "f-squad")),
+      w(h("div", { class: "field" }, h("label", { for: "f-workers", text: "Approved workers" }), workersIn, h("span", { class: "hint", text: "Names you've used before show up as suggestions." }))),
       h("div", { class: "row2" }, h("div", { class: "field" }, startLbl, start), endCell, inspBox),
       w(h("div", { class: "row2" }, field("Budget", h("div", { class: "money-in" }, h("span", { text: "$" }), budget), "f-budget"), field("Actual cost", h("div", { class: "money-in" }, h("span", { text: "$" }), actual), "f-actual"))),
       w(field("Status", status, "f-status")),
@@ -1610,7 +1693,7 @@ button { cursor: pointer; }
       const data = {
         projectId: pid, title: ttl, trade: trade.value,
         crew: (body.querySelector('input[name="crew"]:checked') || {}).value || "inhouse",
-        assignee: assignee.value.trim(), start: start.value, end: end.value || "",
+        assignee: "", coordinator: coordIn.value.trim(), lead: leadIn.value.trim(), squadLeader: squadIn.value.trim(), workers: workersIn.read(), start: start.value, end: end.value || "",
         budget: b === "" ? null : Number(b), actualCost: ac === "" ? null : Number(ac), materialsList: [...mrows.children].map(r => r.read && r.read()).filter(Boolean), materials: "", notes: notes.value.trim(),
         workOrder: wo.checked, status: status.value,
         obsTour: obsTour.checked, obsRequity: obsReq.checked,
@@ -1626,7 +1709,7 @@ button { cursor: pointer; }
         ...stamp()
       };
       if (ins) Object.assign(data, {
-        crew: "sub", assignee: "", end: "", budget: null, materialsList: [], workOrder: false, dependsOn: [],
+        crew: "sub", assignee: "", workers: [], squadLeader: "", end: "", budget: null, materialsList: [], workOrder: false, dependsOn: [],
         status: inspRes.value === "pass" ? "done" : "scheduled",
         obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
         archQ: false, archText: "", archA: "", archAnsweredAt: "",

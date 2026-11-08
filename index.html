@@ -247,7 +247,7 @@ button { cursor: pointer; }
 .tag.arch { background: var(--danger); color: #fff; }
 .chip.arch { border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
 .chip.arch.ok { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); color: var(--ok); background: color-mix(in srgb, var(--ok) 8%, var(--surface)); }
-.arch-box { display: grid; gap: 10px; padding: 12px; border: 1px dashed color-mix(in srgb, var(--danger) 40%, var(--line)); border-radius: 8px; }
+.arch-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--danger); border-radius: 8px; }
 .arch-state { font-size: 12px; font-weight: 600; }
 .arch-state.open { color: var(--danger); } .arch-state.ok { color: var(--ok); }
 .deps { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -291,14 +291,20 @@ button { cursor: pointer; }
 .logrow .hint { display: block; }
 .day-h .acts { display: flex; gap: 6px; flex-wrap: wrap; }
 .row3 { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; }
-.visit-box { display: grid; gap: 10px; padding: 12px; border: 1px dashed var(--line); border-radius: 8px; }
+.visit-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--line); border-radius: 8px; }
+.visit-box.v-tour { border-color: var(--tour); }
+.visit-box.v-req { border-color: var(--class); }
+.visit-box.v-tour > .lbl { color: var(--tour); }
+.visit-box.v-req > .lbl { color: var(--class); }
+.mat-box { padding: 12px; border: 2px dashed var(--warn); border-radius: 8px; }
+.mat-box > .lbl { color: var(--warn); }
 .visit-box .lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
 .chip.obs { border-color: var(--ink); color: var(--ink); background: var(--surface); }
 .chip.media { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .card-sub a { color: var(--accent); font-weight: 600; }
 .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .check-row.plain input { accent-color: var(--accent); }
-.media-box { display: grid; gap: 10px; padding: 12px; border: 1px dashed var(--line); border-radius: 8px; }
+.media-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--accent); border-radius: 8px; }
 .legend .tag { display: inline-block; }
 .bar .nowo { flex: none; font-family: var(--f-mono); font-size: 9px; border: 1px solid currentColor; border-radius: 3px; padding: 0 2px; line-height: 1.2; opacity: .8; }
 .more { grid-row: 5; font-size: 11px; color: var(--muted); padding: 0 8px; pointer-events: none; z-index: 1; white-space: nowrap; overflow: hidden; }
@@ -1768,7 +1774,7 @@ button { cursor: pointer; }
     const startMats = matList(d);
     startMats.forEach(m => addMat(m));
     if (!startMats.length && !ro) addMat({});
-    const matField = h("div", { class: "field" }, h("span", { class: "lbl", text: "Materials" }),
+    const matField = h("div", { class: "field mat-box" }, h("span", { class: "lbl", text: "Materials" }),
       h("div", { class: "mhead" }, h("span", { text: "Material" }), h("span", { text: "Qty" }), h("span", { text: "Status" }), h("span", { text: "Expected delivery" }), h("span")),
       mrows,
       ro ? (startMats.length ? null : h("span", { class: "hint", text: "No materials listed." }))
@@ -1833,7 +1839,7 @@ button { cursor: pointer; }
       const tm = h("input", { type: "time", id: `f-${key}-time`, value: d[key + "Time"] || "", disabled: ro });
       const who = h("input", { type: "text", id: `f-${key}-who`, placeholder: whoPh, value: d[key + "Who"] || "", disabled: ro, autocomplete: "off" });
       const n = h("input", { type: "text", id: `f-${key}-count`, inputmode: "numeric", placeholder: "0", value: d[key + "Count"] ?? "", disabled: ro, autocomplete: "off" });
-      const box = h("div", { class: "visit-box" }, h("span", { class: "lbl", text: lbl + " visit" }),
+      const box = h("div", { class: "visit-box v-" + key }, h("span", { class: "lbl", text: lbl + " visit" }),
         h("div", { class: "row2" }, field("Date", dt, `f-${key}-date`), field("Time", tm, `f-${key}-time`)),
         h("div", { class: "row2", style: "grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)" }, field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)));
       box.hidden = !cb.checked;

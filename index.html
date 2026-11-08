@@ -173,6 +173,38 @@ button { cursor: pointer; }
   display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-align: left;
 }
 .bar:hover { background: color-mix(in srgb, var(--t) 28%, var(--surface)); }
+.hdl { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; touch-action: none; z-index: 2; }
+.hdl.l { left: 0; } .hdl.r { right: 0; }
+.hdl::after { content: ""; position: absolute; top: 3px; bottom: 3px; width: 3px; border-radius: 2px; background: currentColor; opacity: 0; transition: opacity .12s; }
+.hdl.l::after { left: 2px; } .hdl.r::after { right: 2px; }
+.bar:hover .hdl::after, .hdl:active::after { opacity: .55; }
+@media (hover: none) { .hdl::after { opacity: .35; } .hdl { width: 12px; } }
+.cell.drag-on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.draglbl { position: fixed; z-index: 45; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+#cmodal .scrim { z-index: 30; }
+.cbox { position: fixed; z-index: 31; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100% - 24px)); max-height: calc(100% - 32px); background: var(--surface); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 18px 50px rgba(0,0,0,.3); overflow: hidden; }
+.cbox .sheet-b { overflow-y: auto; }
+.csec { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.csum { font-size: 14px; }
+.rgroup { display: grid; gap: 6px; }
+.ropt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+.ropt:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.ropt input { margin: 3px 0 0; accent-color: var(--accent); }
+.ropt span { display: grid; gap: 1px; }
+.ropt small { color: var(--muted); font-size: 12px; }
+.sheet.wide { width: min(780px, 100%); }
+.sheet-b { grid-template-columns: minmax(0, 1fr); }
+.sheet-b p { margin: 0; }
+.sheet.wide .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.sth { margin: 8px 0 0; font-family: var(--f-display); font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; }
+.tscroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.stbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stbl th, .stbl td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.stbl th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); font-weight: 600; }
+.stbl tr:last-child td { border-bottom: 0; }
+.stbl .n { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 12.5px; }
+.stbl th.n { font-family: var(--f-body); font-size: 11px; }
+.money.over { color: var(--danger); } .money.under { color: var(--ok); }
 .bar .code { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .03em; flex: none; }
 .bar .ttl { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .bar.cl { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; border-left-style: dashed; }
@@ -342,6 +374,7 @@ button { cursor: pointer; }
   .mrow .mq { grid-column: 1; } .mrow .ms-sel { grid-column: 2; } .mrow .md { grid-column: 1 / 3; }
   .row3 > :nth-child(2) { grid-column: 1 / -1; grid-row: 1; }
   .idot { width: 13px; height: 13px; }
+  .ropt { padding: 7px 8px; }
   .idots .idot ~ .idot { display: none; }
   .imore { display: inline; }
   .idots { gap: 1px; margin-left: 1px; height: 20px; flex-wrap: nowrap; overflow: hidden; }
@@ -378,6 +411,7 @@ button { cursor: pointer; }
         <span class="who" id="who" hidden></span>
         <button class="btn" id="btn-lock" type="button" hidden>Unlock editing</button>
         <button class="btn" id="btn-export" type="button">Export</button>
+        <button class="btn" id="btn-stats" type="button">Stats</button>
         <button class="btn" id="btn-projects" type="button">Projects</button>
         <button class="btn primary" id="btn-add" type="button">+ Add work</button>
       </div>
@@ -405,6 +439,8 @@ button { cursor: pointer; }
   <main id="main"></main>
 </div>
 <div id="overlay" hidden><div class="scrim" id="scrim"></div><aside class="sheet" id="sheet" role="dialog" aria-modal="true"></aside></div>
+<div id="cmodal" hidden><div class="scrim" id="cscrim"></div><div class="cbox" id="cbox" role="dialog" aria-modal="true" aria-label="Schedule change"></div></div>
+<div class="draglbl" id="draglbl" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -672,7 +708,7 @@ button { cursor: pointer; }
         row.append(h("button", {
           type: "button",
           class: "cell" + (day.getMonth() !== m ? " out" : "") + (di === today ? " today" : "") + (di < today ? " past" : ""),
-          style: `grid-column:${d + 1}`, "aria-label": `${fmtDay(di)}, open day`,
+          style: `grid-column:${d + 1}`, "aria-label": `${fmtDay(di)}, open day`, "data-date": di,
           onclick: () => openDay(di)
         }, h("span", { class: "num", text: day.getDate() }),
           (() => { const ins = tasks.filter(t => isInsp(t) && t.start === di); if (!ins.length) return null;
@@ -696,8 +732,10 @@ button { cursor: pointer; }
           class: `bar t-${TRADE[t.trade] ? t.trade : "other"} st-${effSt(t)}` + (t.start < wsI ? " cl" : "") + (endOf(t) > weI ? " cr" : ""),
           style: `grid-row:${lane + 2};grid-column:${cs + 1} / ${ce + 2}`,
           title: `${tr.label}: ${t.title || "Untitled"} (${spanLabel(t)})` + (isInsp(t) ? ` · ${INSP[t.inspResult] || "Pending"}` : ""),
-          onclick: e => { e.stopPropagation(); openTaskForm(t); }
+          onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); }
         },
+          (S.canWrite && S.db && t.start >= wsI) ? h("span", { class: "hdl l", title: "Drag to change the start date", onpointerdown: e => startDrag(e, t, "start"), onclick: e => e.stopPropagation() }) : null,
+          (S.canWrite && S.db && endOf(t) <= weI) ? h("span", { class: "hdl r", title: "Drag to change the end date", onpointerdown: e => startDrag(e, t, "end"), onclick: e => e.stopPropagation() }) : null,
           t.status === "progress" ? h("span", { class: "live" }) : null,
           h("span", { class: "code", text: tr.code }),
           h("span", { class: "ttl", text: t.title || "Untitled" }),
@@ -762,7 +800,12 @@ button { cursor: pointer; }
       t.media ? h("div", { class: "card-sub" }, h("b", { text: "Media: " }), t.mediaWhat || "Capture requested",
         isLink(t.mediaLink) ? [" · ", h("a", { href: t.mediaLink, target: "_blank", rel: "noopener noreferrer", onclick: e => e.stopPropagation(), text: "Open media" })] : " · No link yet") : null,
       h("div", { class: "card-foot" },
-        (t.budget != null && t.budget !== "") ? h("span", { class: "money", text: money(Number(t.budget)) }) : h("span", { class: "money none", text: "No budget set" }),
+        (() => {
+          const b = numOrNull(t.budget), a = numOrNull(t.actualCost);
+          if (b == null && a == null) return h("span", { class: "money none", text: "No budget set" });
+          return h("span", null, b != null ? h("span", { class: "money", text: money(b) }) : h("span", { class: "money none", text: "No budget" }),
+            a != null ? [h("span", { class: "money none", text: " · actual " }), h("span", { class: "money" + (b != null ? (a > b ? " over" : " under") : ""), text: money(a) })] : null);
+        })(),
         isInsp(t) ? h("span", { class: "hint", text: "Inspection" }) : wo)
     );
   }
@@ -813,12 +856,13 @@ button { cursor: pointer; }
   }
 
   // ---------- sheet ----------
-  function openSheet(title, body, foot, refresh) {
+  function openSheet(title, body, foot, refresh, wide) {
     const sh = $("sheet");
+    sh.classList.toggle("wide", !!wide);
     sh.setAttribute("aria-label", title);
     sh.replaceChildren(
       h("div", { class: "sheet-h" }, h("h2", { text: title }), h("button", { class: "btn icon", type: "button", "aria-label": "Close", onclick: closeSheet, text: "×" })),
-      body, foot || null);
+      ...[body, foot].filter(Boolean));
     $("overlay").hidden = false;
     S.sheetRefresh = refresh || null;
     const f = sh.querySelector("input:not([type=checkbox]):not([type=radio]), textarea, select");
@@ -995,9 +1039,9 @@ button { cursor: pointer; }
     const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
     const pn = id => (S.projects.get(id) || {}).name || "";
     const yn = v => v ? "Yes" : "No";
-    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Crew / Sub name", "Start", "Deadline", "Status", "Inspection", "Budget", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
+    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Crew / Sub name", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
     const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", t.assignee || "", t.start, endOf(t),
-      STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget),
+      STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget), numOrNull(t.actualCost) ?? "",
       matList(t).map(m => `${lineText(m)} - ${lineStatus(m)}`).join("; "),
       matList(t).length ? `${matList(t).filter(m => m.status === "delivered").length} of ${matList(t).length}` : "",
       matList(t).filter(m => linePending(m) && m.date).map(m => m.date).sort()[0] || "", isInsp(t) ? "" : yn(t.workOrder),
@@ -1008,8 +1052,17 @@ button { cursor: pointer; }
       t.archQ ? (archOpen(t) ? "Open" : "Answered") : "No", t.archQ ? (t.archText || "") : "", t.archQ ? (t.archA || "") : "", t.archQ ? (t.archAnsweredAt || "") : "",
       t.notes || ""]);
     const total = items.reduce((s, t) => s + (Number(t.budget) || 0), 0);
-    const ws1 = XLSX.utils.aoa_to_sheet([head, ...rows, [], ["Total budget", "", "", "", "", "", "", "", "", total]]);
-    ws1["!cols"] = head.map((x, i) => ({ wch: [1, 10, 24, 26].includes(i) ? 40 : i === 0 ? 24 : 16 }));
+    const ws1 = XLSX.utils.aoa_to_sheet([head, ...rows, [], ["Totals", "", "", "", "", "", "", "", "", total, items.reduce((s, t) => s + (numOrNull(t.actualCost) || 0), 0)]]);
+    ws1["!cols"] = head.map(x => ({ wch: ["Work to be done", "Materials", "Media: what to capture", "Notes"].includes(x) ? 40 : x === "Project" ? 24 : 16 }));
+    const chead = ["Changed on", "Changed by", "Project", "Work to be done", "What changed", "From", "To", "Days / amount", "Type", "Tied to", "Coordinator", "Lead", "Reason"];
+    const TYPE_TXT = { delay: "Unexpected delay", early: "Unexpected early start", planned: "Planned", overrun: "Unexpected cost increase", savings: "Unexpected savings" };
+    const crows = items.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => [
+      (e.at || "").slice(0, 10), e.by || "", pn(t.projectId), t.title || "",
+      e.kind === "budget" ? "Budget" : "Dates",
+      e.kind === "budget" ? e.from : `${e.from.start} to ${e.from.end}`, e.kind === "budget" ? e.to : `${e.to.start} to ${e.to.end}`,
+      e.kind === "budget" ? e.amount : e.days, TYPE_TXT[e.type] || e.type || "", ROLE_TXT[e.tiedTo] || "", e.coordinator || "", e.lead || "", e.reason || ""]));
+    const ws4 = XLSX.utils.aoa_to_sheet([chead, ...crows]);
+    ws4["!cols"] = chead.map(x => ({ wch: ["Work to be done", "Reason"].includes(x) ? 40 : 18 }));
     const logs = [...S.logs.values()].filter(l => l.date >= A && l.date <= B && (S.project === "all" || l.projectId === S.project)).sort((x, y) => x.date.localeCompare(y.date) || pn(x.projectId).localeCompare(pn(y.projectId)));
     const lhead = ["Date", "Project", "Crew on site", "Crew count", "Total hours", "Weather", "Work completed", "Problems or delays", "Project % complete", "Photos link"];
     const lrows = logs.map(l => [l.date, pn(l.projectId), l.crew || "", l.crewCount ?? "", l.hours ?? "", l.weather || "", l.completed || "", l.problems || "", l.percent ?? "", l.photoLink || ""]);
@@ -1023,6 +1076,7 @@ button { cursor: pointer; }
     XLSX.utils.book_append_sheet(wb, ws1, "Work items");
     XLSX.utils.book_append_sheet(wb, ws3, "Materials");
     XLSX.utils.book_append_sheet(wb, ws2, "Daily logs");
+    XLSX.utils.book_append_sheet(wb, ws4, "Changes");
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const proj = S.project !== "all" ? " " + pn(S.project).replace(/[\\/:*?"<>|]/g, "") : "";
     const label = $("period").textContent.replace(/,/g, "");
@@ -1032,6 +1086,254 @@ button { cursor: pointer; }
       document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
       toast("Spreadsheet downloaded");
     } catch (e) { toast("The spreadsheet couldn't be downloaded on this device."); }
+  }
+
+  // ---------- schedule & budget changes ----------
+  const numOrNull = v => (v === "" || v == null || !isFinite(Number(v))) ? null : Number(v);
+  const plural = (n, w) => `${n} ${w}${Math.abs(n) === 1 ? "" : "s"}`;
+  const rangeTxt = (a, b) => a === b ? fmtShort(a) : `${fmtShort(a)} to ${fmtShort(b)}`;
+  const shiftTxt = (n, what) => n === 0 ? "" : `${what} ${plural(Math.abs(n), "day")} ${n > 0 ? "later" : "earlier"}`;
+  const ROLE_TXT = { coordinator: "Project coordinator", lead: "Project lead", both: "Both", neither: "Neither" };
+
+  function radioGroup(name, opts, value) {
+    const wrap = h("div", { class: "rgroup", role: "radiogroup" });
+    for (const [v, l, sub] of opts) {
+      wrap.append(h("label", { class: "ropt" },
+        h("input", { type: "radio", name, value: v, checked: v === value }),
+        h("span", null, h("b", { text: l }), sub ? h("small", { text: sub }) : null)));
+    }
+    wrap.val = () => (wrap.querySelector("input:checked") || {}).value || "";
+    return wrap;
+  }
+
+  // Resolves to an array of history entries (possibly empty), or null if the person backed out.
+  function askChange(cur, nv) {
+    const p = S.projects.get(cur.projectId) || {};
+    const coord = (p.coordinator || "").trim(), lead = (p.lead || "").trim();
+    const os = cur.start, oe = endOf(cur), ns = nv.start, ne = nv.end && nv.end >= nv.start ? nv.end : nv.start;
+    const sS = dayDiff(parse(os), parse(ns)), eS = dayDiff(parse(oe), parse(ne));
+    const dChanged = sS !== 0 || eS !== 0;
+    const ob = numOrNull(cur.budget), nb = numOrNull(nv.budget);
+    const bChanged = ob != null && nb != null && ob !== nb;
+    if (!dChanged && !bChanged) return Promise.resolve([]);
+
+    return new Promise(resolve => {
+      const box = $("cbox");
+      const err = h("div", { class: "err", role: "alert" });
+      const tiedOpts = [["coordinator", "Project coordinator", coord || "No name set for this project"], ["lead", "Project lead", lead || "No name set for this project"], ["both", "Both"], ["neither", "Neither", "Outside cause (weather, owner, city…)"]];
+      const parts = [];
+      let dType, dTied, bType, bTied;
+      if (dChanged) {
+        const later = sS > 0 || eS > 0, earlier = sS < 0 || eS < 0;
+        dType = radioGroup("cm-dtype", [["delay", "Unexpected delay", "Work started or will finish later than planned"], ["early", "Unexpected early start", "Work started or will finish sooner than planned"], ["planned", "Planned change", "Not counted in the stats"]], later && !earlier ? "delay" : earlier && !later ? "early" : "");
+        dTied = radioGroup("cm-dtied", tiedOpts, "");
+        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to" }), dTied);
+        const sync = () => { tiedWrap.hidden = dType.val() === "planned"; };
+        dType.addEventListener("change", sync);
+        parts.push(h("section", { class: "csec" },
+          h("div", { class: "csum" }, h("b", { text: "Dates: " }), `${rangeTxt(os, oe)} → ${rangeTxt(ns, ne)}`,
+            h("div", { class: "hint", text: [shiftTxt(sS, "Start"), shiftTxt(eS, "End")].filter(Boolean).join(" · ") })),
+          h("div", { class: "field" }, h("span", { class: "lbl", text: "What kind of change?" }), dType), tiedWrap));
+      }
+      if (bChanged) {
+        const up = nb > ob;
+        bType = radioGroup("cm-btype", [["overrun", "Unexpected cost increase"], ["savings", "Unexpected savings"], ["planned", "Planned change", "Not counted in the stats"]], up ? "overrun" : "savings");
+        bTied = radioGroup("cm-btied", tiedOpts, "");
+        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to" }), bTied);
+        bType.addEventListener("change", () => { tiedWrap.hidden = bType.val() === "planned"; });
+        parts.push(h("section", { class: "csec" },
+          h("div", { class: "csum" }, h("b", { text: "Budget: " }), `${money(ob)} → ${money(nb)}`,
+            h("div", { class: "hint", text: `${nb > ob ? "+" : "−"}${money(Math.abs(nb - ob))}` })),
+          h("div", { class: "field" }, h("span", { class: "lbl", text: "What kind of change?" }), bType), tiedWrap));
+      }
+      const reason = h("textarea", { id: "cm-reason", rows: "2", placeholder: "Optional: what happened (e.g. drywall delivery came 3 days late)" });
+      const done = v => { $("cmodal").hidden = true; box.replaceChildren(); S.cmodalCancel = null; resolve(v); };
+      const save = h("button", { class: "btn primary", type: "button" }, "Save change");
+      save.addEventListener("click", () => {
+        err.textContent = "";
+        const out = [], at = new Date().toISOString(), r = reason.value.trim();
+        const base = { at, by: S.me || "Someone", coordinator: coord, lead, reason: r };
+        if (dChanged) {
+          const ty = dType.val(), ti = dTied.val();
+          if (!ty) { err.textContent = "Pick what kind of date change this was."; return; }
+          if (ty !== "planned" && !ti) { err.textContent = "Pick who the date change is tied to."; return; }
+          out.push({ ...base, kind: "dates", type: ty, tiedTo: ty === "planned" ? "" : ti, from: { start: os, end: oe }, to: { start: ns, end: ne }, startShift: sS, endShift: eS, days: Math.max(Math.abs(sS), Math.abs(eS)) });
+        }
+        if (bChanged) {
+          const ty = bType.val(), ti = bTied.val();
+          if (!ty) { err.textContent = "Pick what kind of budget change this was."; return; }
+          if (ty !== "planned" && !ti) { err.textContent = "Pick who the budget change is tied to."; return; }
+          out.push({ ...base, kind: "budget", type: ty, tiedTo: ty === "planned" ? "" : ti, from: ob, to: nb, amount: nb - ob });
+        }
+        done(out);
+      });
+      box.replaceChildren(
+        h("div", { class: "sheet-h" }, h("h2", { text: "Schedule change" })),
+        h("div", { class: "sheet-b" }, h("div", { class: "hint", text: cur.title || "Untitled work" }), parts, field("Reason", reason, "cm-reason"), err),
+        h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: () => done(null) }, "Undo change"), save));
+      S.cmodalCancel = () => done(null);
+      $("cmodal").hidden = false;
+      const first = box.querySelector("input[type=radio]"); if (first) setTimeout(() => first.focus(), 30);
+    });
+  }
+
+  async function commitDates(t, ns, ne) {
+    const cur = S.tasks.get(t.id) || t;
+    const end = ne === ns ? "" : ne;
+    const entries = await askChange(cur, { start: ns, end, budget: cur.budget });
+    if (entries === null) { renderAll(); toast("Change undone"); return; }
+    await write(() => S.db.doc("tasks/" + t.id).update({ start: ns, end, history: [...(cur.history || []), ...entries], datesSetAt: todayIso(), ...stamp() }), "Schedule updated");
+  }
+
+  // ---------- drag to resize ----------
+  function startDrag(e, t, edge) {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    const os = t.start, oe = endOf(t);
+    let ns = os, ne = oe;
+    const lbl = $("draglbl");
+    const paint = () => document.querySelectorAll(".cell[data-date]").forEach(c => c.classList.toggle("drag-on", c.dataset.date >= ns && c.dataset.date <= ne));
+    const move = ev => {
+      const el = document.elementsFromPoint(ev.clientX, ev.clientY).find(x => x.classList && x.classList.contains("cell") && x.dataset.date);
+      if (el) {
+        const di = el.dataset.date;
+        if (edge === "start") ns = di > oe ? oe : di; else ne = di < os ? os : di;
+      }
+      paint();
+      const n = dayDiff(parse(ns), parse(ne)) + 1;
+      lbl.textContent = `${rangeTxt(ns, ne)} · ${plural(n, "day")}`;
+      lbl.hidden = false;
+      lbl.style.left = Math.min(window.innerWidth - lbl.offsetWidth - 8, Math.max(8, ev.clientX + 12)) + "px";
+      lbl.style.top = Math.max(8, ev.clientY - 38) + "px";
+    };
+    const end = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", cancel);
+      lbl.hidden = true;
+      document.querySelectorAll(".cell.drag-on").forEach(c => c.classList.remove("drag-on"));
+      S.suppressClick = true; setTimeout(() => { S.suppressClick = false; }, 60);
+      if (ns !== os || ne !== oe) commitDates(t, ns, ne);
+    };
+    const cancel = () => { ns = os; ne = oe; end(); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", cancel);
+    paint();
+  }
+
+  // ---------- stats ----------
+  function openStats() {
+    let proj = S.project, period = "all";
+    const draw = () => {
+      const today = todayIso();
+      const since = period === "90" ? iso(addDays(new Date(), -90)) : period === "365" ? iso(addDays(new Date(), -365)) : period === "year" ? `${new Date().getFullYear()}-01-01` : "";
+      const inP = d => !since || (d && d >= since);
+      const jobs = [...S.tasks.values()].filter(t => !isInsp(t) && validDate(t.start) && (proj === "all" || t.projectId === proj));
+      const entries = jobs.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => Object.assign({ t }, e))).filter(e => e && e.at && inP(e.at.slice(0, 10)));
+      const people = e => e.tiedTo === "coordinator" ? [[e.coordinator || "Unnamed", "Coordinator"]]
+        : e.tiedTo === "lead" ? [[e.lead || "Unnamed", "Lead"]]
+        : e.tiedTo === "both" ? [[e.coordinator || "Unnamed", "Coordinator"], [e.lead || "Unnamed", "Lead"]]
+        : [["Not tied to anyone", ""]];
+      const tbl = (head, rows, empty) => rows.length
+        ? h("div", null, h("div", { class: "tscroll" }, h("table", { class: "stbl" }, h("thead", null, h("tr", null, head.map((x, i) => h("th", { class: i ? "n" : "", text: x })))),
+            h("tbody", null, rows.map(r => h("tr", null, r.map((x, i) => h("td", { class: i ? "n" : "", text: x }))))))))
+        : h("div", { class: "hint", text: empty });
+      const tile = (k, v, s, cls) => h("div", { class: "stat" + (cls ? " " + cls : "") }, h("span", { class: "k", text: k }), h("span", { class: "v", text: v }), h("span", { class: "s", text: s }));
+      const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+      const med = a => { if (!a.length) return null; const b = a.slice().sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+      const r1 = n => n == null ? "–" : (Math.round(n * 10) / 10).toString();
+      const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+      const roleKey = (n, r) => r ? `${n} (${r.toLowerCase()})` : n;
+
+      // schedule changes
+      const dE = entries.filter(e => e.kind === "dates");
+      const delays = dE.filter(e => e.type === "delay"), earlies = dE.filter(e => e.type === "early"), planned = dE.filter(e => e.type === "planned");
+      const sum = (a, f) => a.reduce((x, e) => x + (Number(f(e)) || 0), 0);
+      const byP = {};
+      for (const e of [...delays, ...earlies]) for (const [n, r] of people(e)) {
+        const k = roleKey(n, r); const o = byP[k] || (byP[k] = { d: 0, dd: 0, e: 0, ed: 0 });
+        if (e.type === "delay") { o.d++; o.dd += e.days || 0; } else { o.e++; o.ed += e.days || 0; }
+      }
+      const schedRows = Object.entries(byP).sort((a, b) => (b[1].d + b[1].e) - (a[1].d + a[1].e)).map(([k, o]) => [k, String(o.d), String(o.dd), String(o.e), String(o.ed)]);
+
+      // planning vision
+      const started = jobs.filter(t => t.start <= today && inP(t.start));
+      const setOn = t => validDate(t.datesSetAt) ? t.datesSetAt : (t.createdAt || "").slice(0, 10) || t.start;
+      const notice = t => Math.max(0, dayDiff(parse(setOn(t)), parse(t.start)));
+      const unexpected = t => (t.history || []).some(e => e.kind === "dates" && (e.type === "delay" || e.type === "early"));
+      const nArr = started.map(notice);
+      const stable = started.filter(t => !unexpected(t));
+      const visP = {};
+      for (const t of started) {
+        const p = S.projects.get(t.projectId) || {};
+        for (const [n, r] of [[p.coordinator, "Coordinator"], [p.lead, "Lead"]]) {
+          if (!n) continue;
+          const k = roleKey(n, r); const o = visP[k] || (visP[k] = { n: [], s: 0 });
+          o.n.push(notice(t)); if (!unexpected(t)) o.s++;
+        }
+      }
+      const visRows = Object.entries(visP).sort((a, b) => avg(b[1].n) - avg(a[1].n)).map(([k, o]) => [k, String(o.n.length), r1(avg(o.n)), pct(o.s, o.n.length)]);
+
+      // budget
+      const costed = jobs.filter(t => numOrNull(t.budget) != null && numOrNull(t.actualCost) != null && inP(t.start));
+      const tb = sum(costed, t => t.budget), ta = sum(costed, t => t.actualCost);
+      const byCat = {};
+      for (const t of costed) { const k = (TRADE[t.trade] || TRADE.other).label; const o = byCat[k] || (byCat[k] = { b: 0, a: 0, n: 0 }); o.b += Number(t.budget); o.a += Number(t.actualCost); o.n++; }
+      const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "") + money(Math.abs(n));
+      const catRows = Object.entries(byCat).sort((a, b) => (b[1].a - b[1].b) - (a[1].a - a[1].b)).map(([k, o]) => [k, String(o.n), money(o.b), money(o.a), signed(o.a - o.b), o.b ? (o.a >= o.b ? "+" : "") + Math.round((o.a - o.b) / o.b * 100) + "%" : "–"]);
+      const bE = entries.filter(e => e.kind === "budget");
+      const over = bE.filter(e => e.type === "overrun"), save = bE.filter(e => e.type === "savings");
+      const bP = {};
+      for (const e of [...over, ...save]) for (const [n, r] of people(e)) {
+        const k = roleKey(n, r); const o = bP[k] || (bP[k] = { o: 0, oa: 0, s: 0, sa: 0 });
+        if (e.type === "overrun") { o.o++; o.oa += Math.abs(e.amount || 0); } else { o.s++; o.sa += Math.abs(e.amount || 0); }
+      }
+      const bRows = Object.entries(bP).map(([k, o]) => [k, String(o.o), money(o.oa), String(o.s), money(o.sa)]);
+      const bStarted = started.filter(t => numOrNull(t.budget) != null);
+      const bSetOn = t => validDate(t.budgetSetAt) ? t.budgetSetAt : (t.createdAt || "").slice(0, 10) || t.start;
+      const bNotice = bStarted.map(t => Math.max(0, dayDiff(parse(bSetOn(t)), parse(t.start))));
+
+      const projSel = h("select", { class: "select", id: "st-proj", "aria-label": "Project" }, h("option", { value: "all", text: "All projects" }), sortedProjects().map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
+      projSel.value = S.projects.has(proj) ? proj : "all";
+      projSel.addEventListener("change", () => { proj = projSel.value; draw(); });
+      const perSel = h("select", { class: "select", id: "st-period", "aria-label": "Period" }, [["all", "All time"], ["90", "Last 90 days"], ["365", "Last 12 months"], ["year", "This year"]].map(([v, l]) => h("option", { value: v, text: l })));
+      perSel.value = period;
+      perSel.addEventListener("change", () => { period = perSel.value; draw(); });
+      const noNames = proj !== "all" && S.projects.get(proj) && !(S.projects.get(proj).coordinator && S.projects.get(proj).lead);
+
+      const body = h("div", { class: "sheet-b" },
+        h("div", { class: "controls" }, projSel, perSel),
+        noNames ? h("div", { class: "banner", text: "This project is missing a coordinator or lead name. Add them in Projects so changes are credited to the right person." }) : null,
+
+        h("h3", { class: "sth", text: "Schedule changes" }),
+        h("div", { class: "stats" },
+          tile("Unexpected delays", String(delays.length), plural(sum(delays, e => e.days), "day") + " total", delays.length ? "alert" : ""),
+          tile("Unexpected early starts", String(earlies.length), plural(sum(earlies, e => e.days), "day") + " total", earlies.length ? "warnish" : ""),
+          tile("Planned changes", String(planned.length), "Not counted against anyone")),
+        tbl(["Tied to", "Delays", "Delay days", "Early starts", "Early days"], schedRows, "No unexpected date changes in this period."),
+
+        h("h3", { class: "sth", text: "Planning vision" }),
+        h("p", { class: "hint", text: "Days of notice is how many days before a job started its dates were set and then left alone. Higher is better: it means the plan held." }),
+        h("div", { class: "stats" },
+          tile("Average days of notice", r1(avg(nArr)), `${plural(started.length, "job")} started`),
+          tile("Median days of notice", r1(med(nArr)), "Half of jobs had more"),
+          tile("Jobs with no surprise", pct(stable.length, started.length), `${stable.length} of ${started.length} had no unexpected date change`, started.length && stable.length / started.length < .7 ? "warnish" : "")),
+        tbl(["Person", "Jobs", "Avg days of notice", "No surprise"], visRows, "Add coordinator and lead names in Projects to see this by person."),
+
+        h("h3", { class: "sth", text: "Budget" }),
+        h("div", { class: "stats" },
+          tile("Budgeted (jobs with actual cost)", money(tb), plural(costed.length, "job")),
+          tile("Actual cost", money(ta), costed.length ? `${signed(ta - tb)} vs budget` : "Enter actual cost on finished jobs", ta > tb ? "alert" : ""),
+          tile("Budget set ahead", r1(avg(bNotice)), "Average days before the job started")),
+        tbl(["Category", "Jobs", "Budget", "Actual", "Over / under", "%"], catRows, "No jobs have both a budget and an actual cost yet."),
+        h("div", { class: "stats" },
+          tile("Unexpected cost increases", String(over.length), money(sum(over, e => Math.abs(e.amount))) + " added", over.length ? "alert" : ""),
+          tile("Unexpected savings", String(save.length), money(sum(save, e => Math.abs(e.amount))) + " saved")),
+        tbl(["Tied to", "Increases", "Amount", "Savings", "Amount"], bRows, "No unexpected budget changes in this period."));
+      openSheet("Stats", body, null, draw, true);
+    };
+    draw();
   }
 
   // ---------- task form ----------
@@ -1076,6 +1378,7 @@ button { cursor: pointer; }
     const assignee = h("input", { type: "text", id: "f-who", placeholder: "Crew member or subcontractor name", value: d.assignee || "", disabled: ro, autocomplete: "off" });
     const start = h("input", { type: "date", id: "f-start", value: d.start, disabled: ro });
     const end = h("input", { type: "date", id: "f-end", value: d.end || "", disabled: ro });
+    const actual = h("input", { type: "text", id: "f-actual", inputmode: "decimal", placeholder: "Fill in when done", value: d.actualCost == null || d.actualCost === "" ? "" : String(d.actualCost), disabled: ro, autocomplete: "off" });
     const budget = h("input", { type: "text", id: "f-budget", inputmode: "decimal", placeholder: "0", value: d.budget === "" || d.budget == null ? "" : String(d.budget), disabled: ro, autocomplete: "off" });
     const status = sel("f-status", STATUSES, d.status, { disabled: ro });
     let mseq = 0;
@@ -1191,7 +1494,8 @@ button { cursor: pointer; }
       w(field("Work to be done", title, "f-title")),
       w(field("Crew or subcontractor", assignee, "f-who")),
       h("div", { class: "row2" }, h("div", { class: "field" }, startLbl, start), endCell, inspBox),
-      w(h("div", { class: "row2" }, field("Budget", h("div", { class: "money-in" }, h("span", { text: "$" }), budget), "f-budget"), field("Status", status, "f-status"))),
+      w(h("div", { class: "row2" }, field("Budget", h("div", { class: "money-in" }, h("span", { text: "$" }), budget), "f-budget"), field("Actual cost", h("div", { class: "money-in" }, h("span", { text: "$" }), actual), "f-actual"))),
+      w(field("Status", status, "f-status")),
       w(matField),
       w(h("div", { class: "field" }, h("label", { for: "f-dep", text: "Waiting on (can't start until done)" }), depList, depSel,
         h("span", { class: "hint", text: "Pick earlier work or an inspection in this project. You'll see a warning until it's done or passed." }))),
@@ -1215,7 +1519,7 @@ button { cursor: pointer; }
       const c = Object.assign({}, S.tasks.get(t.id) || t);
       for (const k of ["id", "createdBy", "createdAt", "updatedBy", "updatedAt"]) delete c[k];
       Object.assign(c, { status: "scheduled", workOrder: false, inspResult: "pending", mediaLink: "", dependsOn: [],
-        materialsList: matList(c).map(m => ({ name: m.name, qty: m.qty || "", status: "needed", date: "" })), materials: "", matStatus: "", matDate: "", archQ: false, archText: "", archA: "", archAnsweredAt: "" });
+        materialsList: matList(c).map(m => ({ name: m.name, qty: m.qty || "", status: "needed", date: "" })), materials: "", matStatus: "", matDate: "", archQ: false, archText: "", archA: "", archAnsweredAt: "", actualCost: null, history: [] });
       openTaskForm(null, c); toast("Copy ready. Change the date or details, then add it.");
     } }, "Duplicate") : null;
     const delBtn = editing && !ro ? h("button", { class: "btn danger", type: "button" }, "Delete") : null;
@@ -1243,6 +1547,8 @@ button { cursor: pointer; }
       if (!ins && end.value && end.value < start.value) { err.textContent = "The deadline is before the start date. Move it to the start date or later."; end.focus(); return; }
       let b = budget.value.replace(/[$,\s]/g, "");
       if (b !== "" && !/^\d+(\.\d{1,2})?$/.test(b)) { err.textContent = "Enter the budget as a dollar amount, like 2500 or 2500.50."; budget.focus(); return; }
+      const ac = actual.value.replace(/[$,\s]/g, "");
+      if (ac !== "" && !/^\d+(\.\d{1,2})?$/.test(ac)) { err.textContent = "Enter the actual cost as a dollar amount, like 2500 or 2500.50."; actual.focus(); return; }
       const ml = mediaLink.value.trim();
       if (media.checked && ml && !isLink(ml)) { err.textContent = "The media link should be a full web address starting with https://, like a Google Drive share link."; mediaLink.focus(); return; }
       if (archCb.checked && !archText.value.trim()) { err.textContent = "Write the question for the architect, or uncheck Architect question."; archText.focus(); return; }
@@ -1264,7 +1570,7 @@ button { cursor: pointer; }
         projectId: pid, title: ttl, trade: trade.value,
         crew: (body.querySelector('input[name="crew"]:checked') || {}).value || "inhouse",
         assignee: assignee.value.trim(), start: start.value, end: end.value || "",
-        budget: b === "" ? null : Number(b), materialsList: [...mrows.children].map(r => r.read && r.read()).filter(Boolean), materials: "", notes: notes.value.trim(),
+        budget: b === "" ? null : Number(b), actualCost: ac === "" ? null : Number(ac), materialsList: [...mrows.children].map(r => r.read && r.read()).filter(Boolean), materials: "", notes: notes.value.trim(),
         workOrder: wo.checked, status: status.value,
         obsTour: obsTour.checked, obsRequity: obsReq.checked,
         media: media.checked, mediaWhat: mediaWhat.value.trim(), mediaLink: ml,
@@ -1285,6 +1591,19 @@ button { cursor: pointer; }
         archQ: false, archText: "", archA: "", archAnsweredAt: "",
         tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: ""
       });
+      if (ins) data.actualCost = null;
+      if (editing) {
+        const cur = S.tasks.get(t.id) || t;
+        if (!ins) {
+          const entries = await askChange(cur, { start: data.start, end: data.end, budget: data.budget });
+          if (entries === null) return;
+          data.history = [...(Array.isArray(cur.history) ? cur.history : []), ...entries];
+        }
+        if (cur.start !== data.start || endOf(cur) !== (data.end && data.end >= data.start ? data.end : data.start)) data.datesSetAt = todayIso();
+        if (numOrNull(cur.budget) !== numOrNull(data.budget)) data.budgetSetAt = data.budget == null ? "" : todayIso();
+      } else {
+        data.history = []; data.datesSetAt = todayIso(); data.budgetSetAt = data.budget == null ? "" : todayIso();
+      }
       saveBtn.disabled = true;
       let ok;
       if (editing) {
@@ -1321,6 +1640,8 @@ button { cursor: pointer; }
       const rows = sortedProjects().map(p => {
         const nm = h("input", { type: "text", id: "pn-" + p.id, value: p.name || "", disabled: ro, autocomplete: "off" });
         const ad = h("input", { type: "text", id: "pa-" + p.id, value: p.address || "", disabled: ro, placeholder: "Address", autocomplete: "off" });
+        const pc = h("input", { type: "text", id: "pc-" + p.id, value: p.coordinator || "", disabled: ro, placeholder: "Manages the calendar", autocomplete: "off" });
+        const pl = h("input", { type: "text", id: "pl-" + p.id, value: p.lead || "", disabled: ro, placeholder: "Runs the job on site", autocomplete: "off" });
         const actions = h("div", { class: "proj-actions" });
         const n = counts[p.id] || 0;
         if (!ro) {
@@ -1334,23 +1655,27 @@ button { cursor: pointer; }
           actions.append(
             h("button", { class: "btn", type: "button", onclick: () => {
               const v = nm.value.trim(); if (!v) { toast("A project needs a name."); return; }
-              write(() => S.db.doc("projects/" + p.id).update({ name: v, address: ad.value.trim() }), "Project saved");
+              write(() => S.db.doc("projects/" + p.id).update({ name: v, address: ad.value.trim(), coordinator: pc.value.trim(), lead: pl.value.trim() }), "Project saved");
             } }, "Save"), del);
         }
         actions.append(h("span", { class: "hint", text: `${n} work item${n === 1 ? "" : "s"}` }));
-        return h("div", { class: "proj" }, field("Name", nm, "pn-" + p.id), field("Address", ad, "pa-" + p.id), actions);
+        return h("div", { class: "proj" }, field("Name", nm, "pn-" + p.id), field("Address", ad, "pa-" + p.id),
+          h("div", { class: "row2" }, field("Project coordinator", pc, "pc-" + p.id), field("Project lead", pl, "pl-" + p.id)), actions);
       });
       const body = h("div", { class: "sheet-b" },
         h("div", { class: "hint", text: "Each project is a job site. Every work item belongs to one project, and the filter at the top shows one site or all of them." }),
         rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "No projects yet." }));
       if (!ro) {
         const nn = h("input", { type: "text", id: "np-name", placeholder: "e.g. 1838 Westwood Ave", autocomplete: "off" });
+        const nc = h("input", { type: "text", id: "np-coord", placeholder: "Manages the calendar", autocomplete: "off" });
+        const nl = h("input", { type: "text", id: "np-lead", placeholder: "Runs the job on site", autocomplete: "off" });
         const na = h("input", { type: "text", id: "np-addr", placeholder: "Address (optional)", autocomplete: "off" });
         body.append(h("div", { class: "section-lbl", text: "Add a project" }),
           h("div", { class: "newproj" }, field("Project name", nn, "np-name"), field("Address", na, "np-addr"),
+            h("div", { class: "row2" }, field("Project coordinator", nc, "np-coord"), field("Project lead", nl, "np-lead")),
             h("div", null, h("button", { class: "btn primary", type: "button", onclick: () => {
               const v = nn.value.trim(); if (!v) { toast("Give the project a name."); nn.focus(); return; }
-              write(() => S.db.collection("projects").doc().set({ name: v, address: na.value.trim(), createdBy: S.me || "Someone", createdAt: new Date().toISOString() }), "Project added");
+              write(() => S.db.collection("projects").doc().set({ name: v, address: na.value.trim(), coordinator: nc.value.trim(), lead: nl.value.trim(), createdBy: S.me || "Someone", createdAt: new Date().toISOString() }), "Project added");
             } }, "Add project"))));
       }
       if (!ro) {
@@ -1370,6 +1695,8 @@ button { cursor: pointer; }
   // ---------- events ----------
   $("btn-add").addEventListener("click", () => openTaskForm(null, {}));
   $("btn-projects").addEventListener("click", openProjects);
+  $("btn-stats").addEventListener("click", openStats);
+  $("cscrim").addEventListener("click", () => { if (S.cmodalCancel) S.cmodalCancel(); });
   $("btn-export").addEventListener("click", exportXlsx);
   $("btn-lock").addEventListener("click", () => S.canWrite ? lockDevice() : openUnlock());
   $("banner-btn").addEventListener("click", openUnlock);
@@ -1386,7 +1713,11 @@ button { cursor: pointer; }
     renderAll();
   });
   $("scrim").addEventListener("click", closeSheet);
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("overlay").hidden) closeSheet(); });
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("cmodal").hidden) { if (S.cmodalCancel) S.cmodalCancel(); return; }
+    if (!$("overlay").hidden) closeSheet();
+  });
 
   // ---------- boot ----------
   renderAll();

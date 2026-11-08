@@ -53,6 +53,9 @@ img { max-width: 100%; }
   --t-safety: #c03e1f;
   --t-trim: #946b10;
   --t-windows: #2f97cf;
+  --tour: #6c3ad1;
+  --class: #0e7490;
+  --vglyph: #ffffff;
   --insp-silver: #c9ced5;
   --insp-rim: #8e959e;
   --insp-pass: #1e9a4b;
@@ -64,14 +67,14 @@ img { max-width: 100%; }
   :root:not([data-theme="light"]) {
     --bg: #12171d; --surface: #1a2129; --surface-2: #202832; --ink: #e6ebf0; --muted: #9aa7b4; --line: #303a46;
     --accent: #6f95ff; --accent-ink: #0d1420; --danger: #f07a62; --warn: #e6a640; --ok: #5fc38a; --scrim: rgba(0,0,0,.6);
-    --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2;
+    --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2; --tour: #a684f2; --class: #3bb6d3; --vglyph: #12171d;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12171d; --surface: #1a2129; --surface-2: #202832; --ink: #e6ebf0; --muted: #9aa7b4; --line: #303a46;
   --accent: #6f95ff; --accent-ink: #0d1420; --danger: #f07a62; --warn: #e6a640; --ok: #5fc38a; --scrim: rgba(0,0,0,.6);
-  --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2;
+  --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2; --tour: #a684f2; --class: #3bb6d3; --vglyph: #12171d;
   color-scheme: dark;
 }
 
@@ -274,6 +277,7 @@ button { cursor: pointer; }
 .idot { width: 18px; height: 18px; display: inline-block; cursor: pointer; border-radius: 50%; flex: none; }
 .idot.movable { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
 .idot.moving, .idot.armed { outline: 2px solid var(--accent); outline-offset: 1px; }
+.vdot svg circle:first-child { stroke: color-mix(in srgb, var(--ink) 18%, transparent); stroke-width: .8; }
 .idot svg { display: block; width: 100%; height: 100%; }
 .idot:hover { transform: scale(1.12); }
 .idot:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -356,7 +360,7 @@ button { cursor: pointer; }
 .sheet-f .left { margin-right: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .field { display: grid; gap: 5px; min-width: 0; }
 .field > label, .field > .lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.field input[type="text"], .field input[type="date"], .field select, .field textarea {
+.field input[type="text"], .field input[type="date"], .field input[type="time"], .field input[type="password"], .field select, .field textarea {
   width: 100%; min-height: 40px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 7px; padding: 8px 10px; min-width: 0;
 }
 .field textarea { resize: vertical; line-height: 1.45; }
@@ -536,6 +540,28 @@ button { cursor: pointer; }
     fail: '<path d="M7 7l6 6M13 7l-6 6" fill="none" stroke="var(--insp-fail)" stroke-width="2.4" stroke-linecap="round"/>',
     pending: '<circle cx="5.9" cy="10" r="1.9" fill="var(--insp-pend)"/><circle cx="10" cy="10" r="1.9" fill="var(--insp-pend)"/><circle cx="14.1" cy="10" r="1.9" fill="var(--insp-pend)"/>'
   };
+  const VISIT = {
+    tour: { label: "Tour", color: "var(--tour)", icon: '<circle cx="7.2" cy="7.3" r="2.3" fill="var(--vglyph)"/><circle cx="13" cy="7.3" r="2.3" fill="var(--vglyph)"/><path d="M3.1 15.4c0-2.6 1.8-4.3 4.1-4.3s4.1 1.7 4.1 4.3z" fill="var(--vglyph)"/><path d="M11.3 15.4c.3-2.5 1.6-4.3 3.6-4.3 2.2 0 3.9 1.7 3.9 4.3z" fill="var(--vglyph)"/>' },
+    req: { label: "Class", color: "var(--class)", icon: '<path d="M10 4.3l7.6 3.6L10 11.5 2.4 7.9z" fill="var(--vglyph)"/><path d="M5.9 9.9v3.3c0 1.2 1.9 2.3 4.1 2.3s4.1-1.1 4.1-2.3V9.9L10 11.9z" fill="var(--vglyph)"/><path d="M16.6 8.3v4.6" stroke="var(--vglyph)" stroke-width="1.2" stroke-linecap="round"/><circle cx="16.6" cy="13.3" r="1" fill="var(--vglyph)"/>' }
+  };
+  const visitDate = (t, k) => validDate(t[k + "Date"]) ? t[k + "Date"] : t.start;
+  function visitDot(k, t) {
+    const v = VISIT[k];
+    const interactive = !!t;
+    const title = t ? `${v.label}: ${t[k + "Who"] || "visit"}${t[k + "Time"] ? " at " + fmtTime(t[k + "Time"]) : ""} · ${t.title || "Untitled"}` : v.label;
+    const movable = !!(t && S.canWrite && S.db);
+    const el = h("span", Object.assign({ class: "idot vdot" + (movable ? " movable" : ""), title }, interactive ? { role: "button", tabindex: "0", "aria-label": title,
+      onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); },
+      onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openTaskForm(t); } },
+      onpointerdown: movable ? e => { e.stopPropagation(); const dt = visitDate(t, k); startDrag(e, { id: t.id, start: dt, end: "" }, "move", ns => moveVisit(t, k, ns)); } : null
+    } : { "aria-hidden": "true" }));
+    el.innerHTML = `<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.4" fill="${v.color}"/>${v.icon}</svg>`;
+    return el;
+  }
+  async function moveVisit(t, k, ns) {
+    if (ns === visitDate(t, k)) return;
+    await write(() => S.db.doc("tasks/" + t.id).update({ [k + "Date"]: ns, ...stamp() }), `${VISIT[k].label} moved to ${fmtShort(ns)}`);
+  }
   function inspDot(res, title, onclick, task) {
     const r = INSP_ICON[res] ? res : "pending";
     const movable = !!(task && S.canWrite && S.db);
@@ -606,7 +632,7 @@ button { cursor: pointer; }
     (S.project === "all" || t.projectId === S.project) &&
     (S.trade === "all" || t.trade === S.trade) &&
     flagMatch(t));
-  const FLAGS = [["all", "All work"], ["observed", "Observed: any"], ["tour", "Observed: Tour"], ["requity", "Observed: Requity"], ["media", "Media requested"], ["arch", "Architect question: open"], ["archall", "Architect question: any"]];
+  const FLAGS = [["all", "All work"], ["observed", "Observed: any"], ["tour", "Observed: Tour"], ["requity", "Observed: Class"], ["media", "Media requested"], ["arch", "Architect question: open"], ["archall", "Architect question: any"]];
   function flagMatch(t) {
     switch (S.flag) {
       case "observed": return !!(t.obsTour || t.obsRequity);
@@ -620,8 +646,6 @@ button { cursor: pointer; }
   }
   function tagEls(t) {
     const out = [];
-    if (t.obsTour) out.push(h("span", { class: "tag", title: "Observed: Tour", text: "TOUR" }));
-    if (t.obsRequity) out.push(h("span", { class: "tag", title: "Observed: Requity", text: "REQ" }));
     if (t.media) out.push(h("span", { class: "tag media", title: "Media requested", text: "MEDIA" }));
     if (archOpen(t)) out.push(h("span", { class: "tag arch", title: "Open architect question", text: "ARCH?" }));
     if (!isDone(t) && waitingOn(t).length) out.push(h("span", { class: "tag warn", title: "Waiting on another item or inspection", text: "WAIT" }));
@@ -715,7 +739,7 @@ button { cursor: pointer; }
     $("legend").replaceChildren(...TRADES.filter(([k]) => k !== "inspection").map(([k, l, c]) => h("span", { class: "t-" + k }, h("i"), `${c} ${l}`)),
       h("span", null, inspDot("pending"), "Inspection pending"), h("span", null, inspDot("pass"), "Passed"), h("span", null, inspDot("fail"), "Failed"),
       h("span", null, "Dashed edge: continues"), h("span", null, "Striped: delayed"),
-      h("span", null, h("b", { class: "tag", text: "TOUR" }), " Tour"), h("span", null, h("b", { class: "tag", text: "REQ" }), " Requity"), h("span", null, h("b", { class: "tag media", text: "MEDIA" }), " Media requested"), h("span", null, h("b", { class: "tag warn", text: "WAIT" }), " Waiting on other work"), h("span", null, h("b", { class: "tag warn", text: "MAT" }), " Materials not delivered"), h("span", null, h("b", { class: "tag arch", text: "ARCH?" }), " Open architect question"), h("span", null, h("b", { class: "logmark", style: "margin:0", text: "LOG" }), " Daily log written"));
+      h("span", null, visitDot("tour"), "Tour"), h("span", null, visitDot("req"), "Class"), h("span", null, h("b", { class: "tag media", text: "MEDIA" }), " Media requested"), h("span", null, h("b", { class: "tag warn", text: "WAIT" }), " Waiting on other work"), h("span", null, h("b", { class: "tag warn", text: "MAT" }), " Materials not delivered"), h("span", null, h("b", { class: "tag arch", text: "ARCH?" }), " Open architect question"), h("span", null, h("b", { class: "logmark", style: "margin:0", text: "LOG" }), " Daily log written"));
   }
 
   // ---------- month ----------
@@ -739,10 +763,17 @@ button { cursor: pointer; }
           style: `grid-column:${d + 1}`, "aria-label": `${fmtDay(di)}, open day`, "data-date": di,
           onclick: () => { if (S.suppressClick) return; openDay(di); }
         }, h("span", { class: "num", text: day.getDate() }),
-          (() => { const ins = tasks.filter(t => isInsp(t) && t.start === di); if (!ins.length) return null;
+          (() => { const ins = tasks.filter(t => isInsp(t) && t.start === di);
+            const tours = tasks.filter(t => !isInsp(t) && t.obsTour && visitDate(t, "tour") === di);
+            const classes = tasks.filter(t => !isInsp(t) && t.obsRequity && visitDate(t, "req") === di);
+            const total = ins.length + tours.length + classes.length;
+            if (!total) return null;
             const rank = t => t.inspResult === "fail" ? 0 : t.inspResult === "pass" ? 2 : 1;
             ins.sort((a, b) => rank(a) - rank(b));
-            return h("span", { class: "idots" }, ins.map(t => inspDot(t.inspResult, `${t.title || "Inspection"}: ${INSP[t.inspResult] || "Pending"}${(S.projects.get(t.projectId) || {}).name ? " · " + S.projects.get(t.projectId).name : ""}`, () => openTaskForm(t), t)), ins.length > 1 ? h("span", { class: "imore", title: `${ins.length} inspections`, text: `+${ins.length - 1}` }) : null); })(),
+            return h("span", { class: "idots" },
+              ins.map(t => inspDot(t.inspResult, `${t.title || "Inspection"}: ${INSP[t.inspResult] || "Pending"}${(S.projects.get(t.projectId) || {}).name ? " · " + S.projects.get(t.projectId).name : ""}`, () => openTaskForm(t), t)),
+              tours.map(t => visitDot("tour", t)), classes.map(t => visitDot("req", t)),
+              total > 1 ? h("span", { class: "imore", title: `${total} inspections and visits`, text: `+${total - 1}` }) : null); })(),
           logsOn(di).length ? h("span", { class: "logmark", title: "Daily log written", text: "LOG" }) : null));
       }
       const items = tasks.filter(t => !isInsp(t) && t.start <= weI && endOf(t) >= wsI)
@@ -786,8 +817,8 @@ button { cursor: pointer; }
     const st = effSt(t);
     const overdue = !isDone(t) && endOf(t) < todayIso();
     const waits = isDone(t) ? [] : waitingOn(t);
-    const visit = (lbl, time, who, n) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
-      [fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set");
+    const visit = (lbl, time, who, n, dt) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
+      [dt ? fmtShort(dt) : "", fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set");
     const who = isInsp(t) ? (INSP_TYPE[t.inspType] || "Inspection") : (t.crew === "sub" ? "Sub" : "In-house");
     const ws = workersOf(t);
     const teamLine = (() => {
@@ -816,7 +847,7 @@ button { cursor: pointer; }
         h("span", { class: "chip trade" }, h("span", { class: "code", text: tr.code }), tr.label),
         h("span", { class: "chip" + (t.crew === "sub" ? " sub" : ""), text: who }),
         t.obsTour ? h("span", { class: "chip obs", text: "Tour" }) : null,
-        t.obsRequity ? h("span", { class: "chip obs", text: "Requity" }) : null,
+        t.obsRequity ? h("span", { class: "chip obs", text: "Class" }) : null,
         t.media ? h("span", { class: "chip media", text: "Media requested" }) : null,
         t.archQ ? h("span", { class: "chip arch" + (archOpen(t) ? "" : " ok"), text: archOpen(t) ? "Architect question open" : "Architect answered" }) : null,
         h("span", { class: "pill " + st, text: isInsp(t) ? "Inspection " + (INSP[t.inspResult] || "Pending").toLowerCase() : STATUS[st] })),
@@ -836,8 +867,8 @@ button { cursor: pointer; }
       t.notes ? h("div", { class: "card-sub" }, h("b", { text: "Notes: " }), t.notes) : null,
       t.archQ ? h("div", { class: "card-sub" }, h("b", { text: "Architect Q: " }), t.archText || "No question written yet",
         (t.archA || "").trim() ? [h("br"), h("b", { text: "Answer: " }), t.archA] : null) : null,
-      t.obsTour ? visit("Tour", t.tourTime, t.tourWho, t.tourCount) : null,
-      t.obsRequity ? visit("Requity", t.reqTime, t.reqWho, t.reqCount) : null,
+      t.obsTour ? visit("Tour", t.tourTime, t.tourWho, t.tourCount, visitDate(t, "tour")) : null,
+      t.obsRequity ? visit("Class", t.reqTime, t.reqWho, t.reqCount, visitDate(t, "req")) : null,
       t.media ? h("div", { class: "card-sub" }, h("b", { text: "Media: " }), t.mediaWhat || "Capture requested",
         isLink(t.mediaLink) ? [" · ", h("a", { href: t.mediaLink, target: "_blank", rel: "noopener noreferrer", onclick: e => e.stopPropagation(), text: "Open media" })] : " · No link yet") : null,
       h("div", { class: "card-foot" },
@@ -1112,15 +1143,15 @@ button { cursor: pointer; }
     const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
     const pn = id => (S.projects.get(id) || {}).name || "";
     const yn = v => v ? "Yes" : "No";
-    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Project coordinator", "Project lead", "Squadron leader", "Approved workers", "Subcontractors", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour time", "Tour visitors", "Tour headcount", "Requity", "Requity time", "Requity group", "Requity headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
+    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Project coordinator", "Project lead", "Squadron leader", "Approved workers", "Subcontractors", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour date", "Tour time", "Tour visitors", "Tour headcount", "Class", "Class date", "Class time", "Class group", "Class headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
     const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", isInsp(t) ? "" : jobCoord(t), isInsp(t) ? "" : jobLead(t), t.squadLeader || "", workersOf(t).join(", "), subsOf(t).join(", "), t.start, endOf(t),
       STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget), numOrNull(t.actualCost) ?? "",
       matList(t).map(m => `${lineText(m)} - ${lineStatus(m)}`).join("; "),
       matList(t).length ? `${matList(t).filter(m => m.status === "delivered").length} of ${matList(t).length}` : "",
       matList(t).filter(m => linePending(m) && m.date).map(m => m.date).sort()[0] || "", isInsp(t) ? "" : yn(t.workOrder),
       (Array.isArray(t.dependsOn) ? t.dependsOn : []).map(id => S.tasks.get(id)).filter(Boolean).map(x => `${x.title || "Untitled"} (${depState(x)})`).join("; "),
-      yn(t.obsTour), t.obsTour ? fmtTime(t.tourTime) : "", t.obsTour ? (t.tourWho || "") : "", t.obsTour ? (t.tourCount ?? "") : "",
-      yn(t.obsRequity), t.obsRequity ? fmtTime(t.reqTime) : "", t.obsRequity ? (t.reqWho || "") : "", t.obsRequity ? (t.reqCount ?? "") : "",
+      yn(t.obsTour), t.obsTour ? visitDate(t, "tour") : "", t.obsTour ? fmtTime(t.tourTime) : "", t.obsTour ? (t.tourWho || "") : "", t.obsTour ? (t.tourCount ?? "") : "",
+      yn(t.obsRequity), t.obsRequity ? visitDate(t, "req") : "", t.obsRequity ? fmtTime(t.reqTime) : "", t.obsRequity ? (t.reqWho || "") : "", t.obsRequity ? (t.reqCount ?? "") : "",
       yn(t.media), t.media ? (t.mediaWhat || "") : "", t.media ? (t.mediaLink || "") : "",
       t.archQ ? (archOpen(t) ? "Open" : "Answered") : "No", t.archQ ? (t.archText || "") : "", t.archQ ? (t.archA || "") : "", t.archQ ? (t.archAnsweredAt || "") : "",
       t.notes || ""]);
@@ -1339,11 +1370,17 @@ button { cursor: pointer; }
     const end = ne === ns ? "" : ne;
     const entries = await askChange(cur, { start: ns, end, budget: cur.budget });
     if (entries === null) { renderAll(); toast("Change undone"); return; }
-    await write(() => S.db.doc("tasks/" + t.id).update({ start: ns, end, history: [...(cur.history || []), ...entries], datesSetAt: todayIso(), ...stamp() }), "Schedule updated");
+    const upd = { start: ns, end, history: [...(cur.history || []), ...entries], datesSetAt: todayIso(), ...stamp() };
+    const off = dayDiff(parse(cur.start), parse(ns));
+    if (off && off === dayDiff(parse(endOf(cur)), parse(ne))) {
+      if (cur.obsTour) upd.tourDate = iso(addDays(parse(visitDate(cur, "tour")), off));
+      if (cur.obsRequity) upd.reqDate = iso(addDays(parse(visitDate(cur, "req")), off));
+    }
+    await write(() => S.db.doc("tasks/" + t.id).update(upd), "Schedule updated");
   }
 
   // ---------- drag to resize ----------
-  function startDrag(e, t, edge) {
+  function startDrag(e, t, edge, onCommit) {
     if (e.button !== undefined && e.button !== 0) return;
     const moveMode = edge === "move";
     const isTouch = e.pointerType === "touch";
@@ -1400,7 +1437,7 @@ button { cursor: pointer; }
     const end = () => {
       cleanup();
       if (active || (moveMode && isTouch && armed)) { S.suppressClick = true; setTimeout(() => { S.suppressClick = false; }, 80); }
-      if (active && (ns !== os || ne !== oe)) commitDates(t, ns, ne);
+      if (active && (ns !== os || ne !== oe)) { if (onCommit) onCommit(ns, ne); else commitDates(t, ns, ne); }
     };
     const cancel = () => { ns = os; ne = oe; active = false; cleanup(); };
     if (!armed) holdTimer = setTimeout(() => {
@@ -1792,19 +1829,21 @@ button { cursor: pointer; }
     projSel.addEventListener("change", () => { deps = []; drawDeps(); });
     // visits
     const visitBox = (key, lbl, cb, whoPh) => {
+      const dt = h("input", { type: "date", id: `f-${key}-date`, value: validDate(d[key + "Date"]) ? d[key + "Date"] : (d.start || ""), disabled: ro });
       const tm = h("input", { type: "time", id: `f-${key}-time`, value: d[key + "Time"] || "", disabled: ro });
       const who = h("input", { type: "text", id: `f-${key}-who`, placeholder: whoPh, value: d[key + "Who"] || "", disabled: ro, autocomplete: "off" });
       const n = h("input", { type: "text", id: `f-${key}-count`, inputmode: "numeric", placeholder: "0", value: d[key + "Count"] ?? "", disabled: ro, autocomplete: "off" });
       const box = h("div", { class: "visit-box" }, h("span", { class: "lbl", text: lbl + " visit" }),
-        h("div", { class: "row3" }, field("Time", tm, `f-${key}-time`), field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)));
+        h("div", { class: "row2" }, field("Date", dt, `f-${key}-date`), field("Time", tm, `f-${key}-time`)),
+        h("div", { class: "row2", style: "grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)" }, field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)));
       box.hidden = !cb.checked;
-      cb.addEventListener("change", () => { box.hidden = !cb.checked; });
-      box.read = () => ({ time: tm.value, who: who.value.trim(), count: n.value.trim() });
+      cb.addEventListener("change", () => { box.hidden = !cb.checked; if (cb.checked && !dt.value) dt.value = start.value; });
+      box.read = () => ({ date: dt.value, time: tm.value, who: who.value.trim(), count: n.value.trim() });
       box.countEl = n;
       return box;
     };
     const tourBox = visitBox("tour", "Tour", obsTour, "e.g. City Council staff, URA");
-    const reqBox = visitBox("req", "Requity", obsReq, "e.g. Requity carpentry cohort");
+    const reqBox = visitBox("req", "Class", obsReq, "e.g. Requity carpentry cohort");
     const woRow = h("label", { class: "check-row", for: "f-wo" }, wo, "Work order has been created");
     const archCb = h("input", { type: "checkbox", id: "f-arch", checked: !!d.archQ, disabled: ro });
     const archText = h("textarea", { id: "f-arch-q", rows: "3", placeholder: "What do you need the architect to clarify? (e.g. Header size over the new kitchen opening?)", value: d.archText || "", disabled: ro });
@@ -1842,7 +1881,7 @@ button { cursor: pointer; }
       w(h("div", { class: "field" }, h("span", { class: "lbl", text: "Observed work (check any that apply)" }),
         h("div", { class: "checks" },
           h("label", { class: "check-row plain", for: "f-tour" }, obsTour, "Tour"),
-          h("label", { class: "check-row plain", for: "f-req" }, obsReq, "Requity")))),
+          h("label", { class: "check-row plain", for: "f-req" }, obsReq, "Class")))),
       w(h("div", { class: "field" }, tourBox, reqBox)),
       w(h("label", { class: "check-row plain", for: "f-arch" }, archCb, "Architect question")),
       w(h("div", { class: "field" }, archBox)),
@@ -1891,7 +1930,7 @@ button { cursor: pointer; }
       if (media.checked && ml && !isLink(ml)) { err.textContent = "The media link should be a full web address starting with https://, like a Google Drive share link."; mediaLink.focus(); return; }
       if (archCb.checked && !archText.value.trim()) { err.textContent = "Write the question for the architect, or uncheck Architect question."; archText.focus(); return; }
       const tv = tourBox.read(), rv = reqBox.read();
-      for (const [v, box, lbl] of [[tv, tourBox, "Tour"], [rv, reqBox, "Requity"]]) {
+      for (const [v, box, lbl] of [[tv, tourBox, "Tour"], [rv, reqBox, "Class"]]) {
         if (!box.hidden && v.count !== "" && !/^\d+$/.test(v.count)) { err.textContent = `${lbl} headcount should be a whole number.`; box.countEl.focus(); return; }
       }
       let pid = projSel.value;
@@ -1917,6 +1956,7 @@ button { cursor: pointer; }
         dependsOn: deps.filter(id => S.tasks.has(id)),
         archQ: archCb.checked, archText: archCb.checked ? archText.value.trim() : "", archA: archCb.checked ? archA.value.trim() : "",
         archAnsweredAt: archCb.checked && archA.value.trim() ? ((d.archA || "").trim() ? (d.archAnsweredAt || todayIso()) : todayIso()) : "",
+        tourDate: obsTour.checked ? (tv.date || start.value) : "", reqDate: obsReq.checked ? (rv.date || start.value) : "",
         tourTime: obsTour.checked ? tv.time : "", tourWho: obsTour.checked ? tv.who : "", tourCount: obsTour.checked && tv.count !== "" ? Number(tv.count) : "",
         reqTime: obsReq.checked ? rv.time : "", reqWho: obsReq.checked ? rv.who : "", reqCount: obsReq.checked && rv.count !== "" ? Number(rv.count) : "",
         inspType: ins ? inspType.value : "",
@@ -1927,7 +1967,7 @@ button { cursor: pointer; }
         status: inspRes.value === "pass" ? "done" : "scheduled",
         obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
         archQ: false, archText: "", archA: "", archAnsweredAt: "",
-        tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: ""
+        tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: "", tourDate: "", reqDate: ""
       });
       if (ins) data.actualCost = null;
       if (editing) {

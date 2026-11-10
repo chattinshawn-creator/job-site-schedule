@@ -171,7 +171,7 @@ button { cursor: pointer; }
 .month { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface-2); border-bottom: 1px solid var(--line); }
 .dow div { padding: 6px 8px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: 28px repeat(3, 24px) 20px; position: relative; }
+.week { --lanes: 3; --lane: 24px; --head: 28px; --foot: 14px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: var(--head) repeat(var(--lanes), var(--lane)) var(--foot); position: relative; }
 .week + .week { border-top: 1px solid var(--line); }
 .cell { grid-row: 1 / -1; border: 0; border-left: 1px solid var(--line); background: transparent; text-align: left; padding: 4px 6px; display: flex; align-items: flex-start; z-index: 0; min-width: 0; }
 .cell:first-of-type { border-left: 0; }
@@ -412,7 +412,7 @@ button { cursor: pointer; }
   .brand h1 { font-size: 26px; }
   .period { font-size: 19px; min-width: 0; }
   .controls .select { flex: 1 1 140px; }
-  .week { grid-template-rows: 26px repeat(3, 17px) 16px; }
+  .week { --lane: 17px; --head: 26px; --foot: 10px; }
   .bar { font-size: 10px; padding: 0 3px; margin: 1px 1px; border-radius: 3px; }
   .bar .ttl, .bar .nowo { display: none; }
   .bar .tag { font-size: 0; width: 5px; height: 5px; padding: 0; border-radius: 50%; }
@@ -475,6 +475,7 @@ button { cursor: pointer; }
         <span class="period" id="period"></span>
       </div>
       <span class="spacer"></span>
+      <select class="select" id="f-coord" aria-label="Filter by coordinator"></select>
       <select class="select" id="f-project" aria-label="Filter by project"></select>
       <select class="select" id="f-trade" aria-label="Filter by category"></select>
       <select class="select" id="f-flag" aria-label="Filter by observed or media"></select>
@@ -647,6 +648,7 @@ button { cursor: pointer; }
     loadedP: false, loadedT: false, loadedL: false, slow: false,
     view: recall("view", "month"),
     project: recall("project", "all"),
+    coord: recall("coord", "all"),
     trade: recall("trade", "all"),
     flag: recall("flag", "all"),
     cursor: new Date(),
@@ -655,8 +657,17 @@ button { cursor: pointer; }
   if (!["month", "week"].includes(S.view)) S.view = "month";
 
   const sortedProjects = () => [...S.projects.values()].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const projCoord = id => ((S.projects.get(id) || {}).coordinator || "").trim();
+  const coordinators = () => {
+    const m = new Map();
+    for (const p of S.projects.values()) { const c = (p.coordinator || "").trim(); if (c && !m.has(c.toLowerCase())) m.set(c.toLowerCase(), c); }
+    return [...m.values()].sort((a, b) => a.localeCompare(b));
+  };
+  const coordMatchProj = id => S.coord === "all" || (S.coord === "__none" ? !projCoord(id) : projCoord(id).toLowerCase() === S.coord.toLowerCase());
+  const coordMatch = t => S.coord === "all" || coordMatchProj(t.projectId) || (S.coord !== "__none" && (t.coordinator || "").trim().toLowerCase() === S.coord.toLowerCase());
   const filtered = () => [...S.tasks.values()].filter(t =>
     validDate(t.start) &&
+    coordMatch(t) &&
     (S.project === "all" || t.projectId === S.project) &&
     (S.trade === "all" || t.trade === S.trade) &&
     flagMatch(t));
@@ -704,9 +715,15 @@ button { cursor: pointer; }
 
   // ---------- header / filters ----------
   function renderFilters() {
-    const fp = $("f-project"); fp.replaceChildren(h("option", { value: "all", text: "All projects" }));
-    for (const p of sortedProjects()) fp.append(h("option", { value: p.id, text: p.name || "Untitled project" }));
-    if (S.project !== "all" && !S.projects.has(S.project) && S.loadedP) S.project = "all";
+    const fc = $("f-coord"); fc.replaceChildren(h("option", { value: "all", text: "All coordinators" }));
+    const cs = coordinators();
+    for (const c of cs) fc.append(h("option", { value: c, text: c }));
+    if ([...S.projects.values()].some(p => !(p.coordinator || "").trim())) fc.append(h("option", { value: "__none", text: "No coordinator set" }));
+    if (S.coord !== "all" && S.coord !== "__none" && !cs.some(c => c.toLowerCase() === S.coord.toLowerCase()) && S.loadedP) S.coord = "all";
+    fc.value = cs.find(c => c.toLowerCase() === S.coord.toLowerCase()) || S.coord;
+    const fp = $("f-project"); fp.replaceChildren(h("option", { value: "all", text: S.coord === "all" ? "All projects" : "All their projects" }));
+    for (const p of sortedProjects().filter(p => coordMatchProj(p.id))) fp.append(h("option", { value: p.id, text: p.name || "Untitled project" }));
+    if (S.project !== "all" && (!S.projects.has(S.project) || !coordMatchProj(S.project)) && S.loadedP) S.project = "all";
     fp.value = S.project;
     const ft = $("f-trade"); ft.replaceChildren(h("option", { value: "all", text: "All categories" }));
     for (const [k, l] of TRADES) ft.append(h("option", { value: k, text: l }));
@@ -807,13 +824,12 @@ button { cursor: pointer; }
       }
       const items = tasks.filter(t => !isInsp(t) && t.start <= weI && endOf(t) >= wsI)
         .sort((a, b) => a.start.localeCompare(b.start) || endOf(b).localeCompare(endOf(a)) || (a.title || "").localeCompare(b.title || ""));
-      const laneEnd = [], hidden = Array(7).fill(0);
+      const laneEnd = [];
       for (const t of items) {
         const cs = Math.max(0, dayDiff(ws, parse(t.start)));
         const ce = Math.min(6, dayDiff(ws, parse(endOf(t))));
         let lane = laneEnd.findIndex(e => e < cs);
         if (lane === -1) { lane = laneEnd.length; laneEnd.push(ce); } else laneEnd[lane] = ce;
-        if (lane >= LANES) { for (let d = cs; d <= ce; d++) hidden[d]++; continue; }
         const tr = TRADE[t.trade] || TRADE.other;
         row.append(h("button", {
           type: "button",
@@ -833,7 +849,7 @@ button { cursor: pointer; }
           needsWO(t) ? h("span", { class: "nowo", title: "No work order yet", text: "WO?" }) : null
         ));
       }
-      hidden.forEach((n, d) => { if (n) row.append(h("div", { class: "more", style: `grid-column:${d + 1}`, text: `+${n} more` })); });
+      row.style.setProperty("--lanes", Math.max(LANES, laneEnd.length));
       wrap.append(row);
     }
     return wrap;
@@ -1090,7 +1106,7 @@ button { cursor: pointer; }
   }
 
   // ---------- daily logs ----------
-  function logsOn(di) { return [...S.logs.values()].filter(l => l.date === di && (S.project === "all" || l.projectId === S.project)); }
+  function logsOn(di) { return [...S.logs.values()].filter(l => l.date === di && coordMatchProj(l.projectId) && (S.project === "all" || l.projectId === S.project)); }
   function openDayLog(di) {
     if (S.project !== "all" && S.projects.has(S.project)) return openLogForm(S.project, di);
     if (S.projects.size === 1) return openLogForm(sortedProjects()[0].id, di);
@@ -1603,7 +1619,7 @@ button { cursor: pointer; }
       const today = todayIso();
       const since = period === "90" ? iso(addDays(new Date(), -90)) : period === "365" ? iso(addDays(new Date(), -365)) : period === "year" ? `${new Date().getFullYear()}-01-01` : "";
       const inP = d => !since || (d && d >= since);
-      const allItems = [...S.tasks.values()].filter(t => validDate(t.start) && (proj === "all" || t.projectId === proj));
+      const allItems = [...S.tasks.values()].filter(t => validDate(t.start) && coordMatch(t) && (proj === "all" || t.projectId === proj));
       const jobs = allItems.filter(t => !isInsp(t));
       const entries = allItems.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => Object.assign({ t }, e))).filter(e => e && e.at && inP(e.at.slice(0, 10)));
       const people = e => {
@@ -1676,7 +1692,7 @@ button { cursor: pointer; }
       const bSetOn = t => validDate(t.budgetSetAt) ? t.budgetSetAt : (t.createdAt || "").slice(0, 10) || t.start;
       const bNotice = bStarted.map(t => Math.max(0, dayDiff(parse(bSetOn(t)), parse(t.start))));
 
-      const projSel = h("select", { class: "select", id: "st-proj", "aria-label": "Project" }, h("option", { value: "all", text: "All projects" }), sortedProjects().map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
+      const projSel = h("select", { class: "select", id: "st-proj", "aria-label": "Project" }, h("option", { value: "all", text: S.coord === "all" ? "All projects" : `All of ${S.coord === "__none" ? "the unassigned" : S.coord + "'s"} projects` }), sortedProjects().filter(p => coordMatchProj(p.id)).map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
       projSel.value = S.projects.has(proj) ? proj : "all";
       projSel.addEventListener("change", () => { proj = projSel.value; draw(); });
       const perSel = h("select", { class: "select", id: "st-period", "aria-label": "Period" }, [["all", "All time"], ["90", "Last 90 days"], ["365", "Last 12 months"], ["year", "This year"]].map(([v, l]) => h("option", { value: v, text: l })));
@@ -2235,6 +2251,7 @@ button { cursor: pointer; }
   $("btn-prev").addEventListener("click", () => { S.cursor = S.view === "month" ? new Date(S.cursor.getFullYear(), S.cursor.getMonth() - 1, 1) : addDays(S.cursor, -7); renderAll(); });
   $("btn-next").addEventListener("click", () => { S.cursor = S.view === "month" ? new Date(S.cursor.getFullYear(), S.cursor.getMonth() + 1, 1) : addDays(S.cursor, 7); renderAll(); });
   $("f-project").addEventListener("change", e => { S.project = e.target.value; store("project", S.project); renderAll(); });
+  $("f-coord").addEventListener("change", e => { S.coord = e.target.value; store("coord", S.coord); if (S.project !== "all" && !coordMatchProj(S.project)) { S.project = "all"; store("project", "all"); } renderAll(); });
   $("f-trade").addEventListener("change", e => { S.trade = e.target.value; store("trade", S.trade); renderAll(); });
   $("f-flag").addEventListener("change", e => { S.flag = e.target.value; store("flag", S.flag); renderAll(); });
   $("v-month").addEventListener("click", () => { S.view = "month"; store("view", "month"); renderAll(); });

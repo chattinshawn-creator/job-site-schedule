@@ -217,6 +217,8 @@ button { cursor: pointer; }
 .ropt span { display: grid; gap: 1px; }
 .ropt small { color: var(--muted); font-size: 12px; }
 .sheet.wide { width: min(780px, 100%); }
+.name-group { display: grid; gap: 8px; }
+.name-group + .name-group { margin-top: 6px; }
 .rec { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 9px; flex-wrap: wrap; }
 .rec.open { border-color: var(--accent); }
 .rec-main { display: grid; gap: 6px; min-width: 0; flex: 1 1 260px; font-size: 13.5px; }
@@ -2091,82 +2093,96 @@ button { cursor: pointer; }
   }
 
   // ---------- saved names ----------
-  function nameUsage(n) {
-    const tasks = [...S.tasks.values()].filter(t => jobCoordRaw(t) === n || jobLeadRaw(t) === n || (t.squadLeader || "").trim() === n || workersOf(t).includes(n) || subsOf(t).includes(n));
-    const projects = [...S.projects.values()].filter(p => (p.coordinator || "").trim() === n || (p.lead || "").trim() === n);
-    return { tasks, projects };
-  }
   const jobCoordRaw = t => (t.coordinator || "").trim();
   const jobLeadRaw = t => (t.lead || "").trim();
-
-  // Replace `from` with `to` everywhere it is stored ("" removes it).
-  async function replaceName(from, to) {
-    const { tasks, projects } = nameUsage(from);
-    const swap = v => (v || "").trim() === from ? to : v;
+  // Each group says where its names live on jobs, projects and past change records.
+  const NAME_GROUPS = [
+    { key: "coordinator", label: "Project coordinators", one: "coordinator", job: t => [jobCoordRaw(t)], proj: p => [(p.coordinator || "").trim()], field: "coordinator" },
+    { key: "lead", label: "Project leads", one: "lead", job: t => [jobLeadRaw(t)], proj: p => [(p.lead || "").trim()], field: "lead" },
+    { key: "squad", label: "Squadron leaders", one: "squadron leader", job: t => [(t.squadLeader || "").trim()], field: "squadLeader" },
+    { key: "workers", label: "Approved workers", one: "worker", job: t => workersOf(t), list: true },
+    { key: "subs", label: "Subcontractors", one: "subcontractor", job: t => subsOf(t), field: "subs", list: true }
+  ];
+  function groupUsage(g, n) {
+    const tasks = [...S.tasks.values()].filter(t => g.job(t).includes(n));
+    const projects = g.proj ? [...S.projects.values()].filter(p => g.proj(p).includes(n)) : [];
+    return { tasks, projects };
+  }
+  function groupNames(g) {
+    const m = new Map();
+    const add = n => { n = (n || "").trim(); if (n && !/^u_[A-Za-z0-9_-]{10,}$/.test(n) && !m.has(n)) m.set(n, n); };
+    for (const t of S.tasks.values()) g.job(t).forEach(add);
+    if (g.proj) for (const p of S.projects.values()) g.proj(p).forEach(add);
+    return [...m.values()].sort((a, b) => a.localeCompare(b));
+  }
+  const dedupe = arr => { const out = []; for (const v of arr) if (v && !out.some(x => x.toLowerCase() === v.toLowerCase())) out.push(v); return out; };
+  // Replace `from` with `to` within one group only ("" removes it).
+  async function replaceNameIn(g, from, to) {
+    const { tasks, projects } = groupUsage(g, from);
     const ops = [];
     for (const t of tasks) {
-      const ws = [];
-      for (const w of workersOf(t)) { const v = w === from ? to : w; if (v && !ws.some(x => x.toLowerCase() === v.toLowerCase())) ws.push(v); }
-      const upd = { workers: ws, assignee: "", ...stamp() };
-      if (jobCoordRaw(t) === from) upd.coordinator = to;
-      if (jobLeadRaw(t) === from) upd.lead = to;
-      if ((t.squadLeader || "").trim() === from) upd.squadLeader = to;
-      if (subsOf(t).includes(from)) { const ss = []; for (const x of subsOf(t)) { const v = x === from ? to : x; if (v && !ss.some(y => y.toLowerCase() === v.toLowerCase())) ss.push(v); } upd.subs = ss; }
-      if (Array.isArray(t.history) && to) upd.history = t.history.map(e => Object.assign({}, e, { coordinator: swap(e.coordinator), lead: swap(e.lead), squadLeader: swap(e.squadLeader) }, Array.isArray(e.subs) ? { subs: e.subs.map(x => x === from ? to : x) } : {}));
+      const upd = { ...stamp() };
+      if (g.key === "workers") { upd.workers = dedupe(workersOf(t).map(x => x === from ? to : x)); upd.assignee = ""; }
+      else if (g.key === "subs") upd.subs = dedupe(subsOf(t).map(x => x === from ? to : x));
+      else upd[g.field] = to;
+      if (to && g.field && Array.isArray(t.history)) upd.history = t.history.map(e => {
+        if (g.key === "subs") return Array.isArray(e.subs) ? Object.assign({}, e, { subs: e.subs.map(x => x === from ? to : x) }) : e;
+        return (e[g.field] || "").trim() === from ? Object.assign({}, e, { [g.field]: to }) : e;
+      });
       ops.push([S.db.doc("tasks/" + t.id), upd]);
     }
-    for (const p of projects) {
-      const upd = {};
-      if ((p.coordinator || "").trim() === from) upd.coordinator = to;
-      if ((p.lead || "").trim() === from) upd.lead = to;
-      ops.push([S.db.doc("projects/" + p.id), upd]);
-    }
+    for (const p of projects) ops.push([S.db.doc("projects/" + p.id), { [g.field]: to }]);
     return write(async () => {
       for (let i = 0; i < ops.length; i += 400) {
         const b = S.db.batch();
         for (const [ref, upd] of ops.slice(i, i + 400)) b.update(ref, upd);
         await b.commit();
       }
-    }, to ? `Changed "${from}" to "${to}"` : `Removed "${from}"`);
+    }, to ? `Changed ${g.one} "${from}" to "${to}"` : `Removed ${g.one} "${from}"`);
   }
 
   function openNames() {
     const draw = () => {
-      const names = knownNames().filter(n => n !== S.me || nameUsage(n).tasks.length || nameUsage(n).projects.length);
-      const rows = names.map(n => {
-        const u = nameUsage(n);
-        const where = [u.tasks.length ? plural(u.tasks.length, "job") : "", u.projects.length ? plural(u.projects.length, "project") : ""].filter(Boolean).join(", ") || "Not used on any job";
-        const row = h("div", { class: "logrow" });
-        const normal = () => row.replaceChildren(
-          h("div", null, h("b", { text: n }), h("span", { class: "hint", text: where })),
-          h("div", { class: "proj-actions" },
-            h("button", { class: "btn", type: "button", onclick: fix }, "Fix spelling"),
-            h("button", { class: "btn danger", type: "button", onclick: remove }, "Remove")));
-        const fix = () => {
-          const inp = h("input", { type: "text", class: "select", id: "nm-fix", value: n, autocomplete: "off", style: "flex:1 1 160px;min-width:0" });
-          const go = async () => {
-            const v = inp.value.trim();
-            if (!v || v === n) { normal(); return; }
-            await replaceName(n, v);
+      const sections = NAME_GROUPS.map(g => {
+        const names = groupNames(g);
+        const rows = names.map(n => {
+          const u = groupUsage(g, n);
+          const where = [u.tasks.length ? plural(u.tasks.length, "job") : "", u.projects.length ? plural(u.projects.length, "project") : ""].filter(Boolean).join(", ");
+          const row = h("div", { class: "logrow" });
+          const normal = () => row.replaceChildren(
+            h("div", null, h("b", { text: n }), h("span", { class: "hint", text: where })),
+            h("div", { class: "proj-actions" },
+              h("button", { class: "btn", type: "button", onclick: fix }, "Fix spelling"),
+              h("button", { class: "btn danger", type: "button", onclick: remove }, "Remove")));
+          const fix = () => {
+            const inp = h("input", { type: "text", class: "select", id: `nm-fix-${g.key}`, value: n, autocomplete: "off", style: "flex:1 1 160px;min-width:0" });
+            const go = async () => {
+              const v = inp.value.trim();
+              if (!v || v === n) { normal(); return; }
+              await replaceNameIn(g, n, v);
+            };
+            inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); if (e.key === "Escape") { e.stopPropagation(); normal(); } });
+            row.replaceChildren(h("div", { class: "proj-actions", style: "flex:1 1 auto" }, inp,
+              h("button", { class: "btn primary", type: "button", onclick: go }, "Save"),
+              h("button", { class: "btn", type: "button", onclick: normal }, "Cancel")),
+              h("span", { class: "hint", text: `Changes "${n}" as ${g.one} on ${where}${g.field ? ", including past change records" : ""}. Other roles are left alone.` }));
+            setTimeout(() => { inp.focus(); inp.select(); }, 20);
           };
-          inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); if (e.key === "Escape") { e.stopPropagation(); normal(); } });
-          row.replaceChildren(h("div", { class: "proj-actions", style: "flex:1 1 auto" }, inp,
-            h("button", { class: "btn primary", type: "button", onclick: go }, "Save"),
-            h("button", { class: "btn", type: "button", onclick: normal }, "Cancel")),
-            h("span", { class: "hint", text: `Changes "${n}" on ${where.toLowerCase()}, including past change records.` }));
-          setTimeout(() => { inp.focus(); inp.select(); }, 20);
-        };
-        const remove = () => row.replaceChildren(
-          h("span", { class: "hint", text: u.tasks.length || u.projects.length ? `Remove "${n}" from ${where.toLowerCase()}? Past change records keep it.` : `Remove "${n}"?` }),
-          h("div", { class: "proj-actions" },
-            h("button", { class: "btn danger solid", type: "button", onclick: () => replaceName(n, "") }, "Yes, remove"),
-            h("button", { class: "btn", type: "button", onclick: normal }, "Keep")));
-        normal();
-        return row;
+          const remove = () => row.replaceChildren(
+            h("span", { class: "hint", text: `Remove "${n}" as ${g.one} from ${where}? Other roles and past change records keep the name.` }),
+            h("div", { class: "proj-actions" },
+              h("button", { class: "btn danger solid", type: "button", onclick: () => replaceNameIn(g, n, "") }, "Yes, remove"),
+              h("button", { class: "btn", type: "button", onclick: normal }, "Keep")));
+          normal();
+          return row;
+        });
+        return h("section", { class: "name-group" },
+          h("div", { class: "section-lbl", text: `${g.label} (${names.length})` }),
+          rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: `No ${g.label.toLowerCase()} entered yet.` }));
       });
       openSheet("Saved names", h("div", { class: "sheet-b" },
-        h("p", { class: "hint", text: "These are the names suggested when you type a coordinator, lead, squadron leader or worker. Fix a misspelled name to correct it on every job, or remove one that shouldn't be there." }),
-        rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "No names saved yet. Names appear here once they're entered on a job or project." })),
+        h("p", { class: "hint", text: "Names are grouped by the role they're entered under. Fix or remove a name within one group; the same person in another role isn't changed." }),
+        sections),
         h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: openProjects }, "Back to Projects")), draw);
     };
     draw();

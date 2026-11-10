@@ -500,7 +500,6 @@ button { cursor: pointer; }
 <div class="draglbl" id="draglbl" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1185,8 +1184,27 @@ button { cursor: pointer; }
   }
 
   // ---------- export ----------
+  // The spreadsheet library is large, so it's only fetched the first time someone exports.
+  let xlsxLoading = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve();
+    if (!xlsxLoading) xlsxLoading = new Promise((resolve, reject) => {
+      const sc = document.createElement("script");
+      sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+      sc.onload = () => window.XLSX ? resolve() : reject(new Error("missing"));
+      sc.onerror = () => { xlsxLoading = null; sc.remove(); reject(new Error("load failed")); };
+      document.head.append(sc);
+    });
+    return xlsxLoading;
+  }
   async function exportXlsx() {
-    if (!window.XLSX) { toast("The spreadsheet tool didn't load. Reload the page and try again."); return; }
+    if (!window.XLSX) {
+      const btn = $("btn-export"), label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Preparing…";
+      try { await loadXlsx(); }
+      catch (e) { toast("The spreadsheet tool didn't load. Check your connection and try again."); return; }
+      finally { btn.disabled = false; btn.textContent = label; }
+    }
     const [a, b] = range(); const A = iso(a), B = iso(b);
     const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
     const pn = id => (S.projects.get(id) || {}).name || "";

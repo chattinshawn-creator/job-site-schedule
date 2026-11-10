@@ -128,6 +128,16 @@ button { cursor: pointer; }
 .stat:not(.clickable) { cursor: default; }
 
 /* Legend */
+.keybox { border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.keybox > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 12px; user-select: none; }
+.keybox > summary::-webkit-details-marker { display: none; }
+.keybox > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; flex: none; }
+.keybox[open] > summary::before { transform: rotate(45deg); }
+.keybox > summary:hover .key-title { color: var(--accent); }
+.key-title { font-weight: 600; font-size: 13px; }
+.key-hint { font-size: 12px; color: var(--muted); }
+.keybox[open] .key-hint { display: none; }
+.keybox .legend { padding: 2px 12px 12px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 5px; }
 .legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--t); display: inline-block; }
@@ -249,6 +259,11 @@ button { cursor: pointer; }
 .chip.arch.ok { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); color: var(--ok); background: color-mix(in srgb, var(--ok) 8%, var(--surface)); }
 .arch-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--danger); border-radius: 8px; }
 .arch-state { font-size: 12px; font-weight: 600; }
+.arch-list { display: grid; gap: 10px; }
+.arch-item { display: grid; gap: 8px; padding: 10px; border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--line)); border-radius: 8px; background: var(--surface); }
+.arch-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.arch-num { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--danger); }
+.arch-del { margin-left: auto; height: 30px; padding: 0 10px; font-size: 12.5px; }
 .arch-state.open { color: var(--danger); } .arch-state.ok { color: var(--ok); }
 .deps { display: flex; flex-wrap: wrap; gap: 6px; }
 .dep { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; padding: 3px 4px 3px 8px; border-radius: 6px; border: 1px solid var(--line); max-width: 100%; overflow-wrap: anywhere; }
@@ -471,7 +486,10 @@ button { cursor: pointer; }
   </header>
   <div id="banner" hidden class="banner"><span id="banner-msg"></span><button class="btn" id="banner-btn" type="button" hidden>Unlock editing</button></div>
   <section class="stats" id="stats" aria-label="Needs attention"></section>
-  <div class="legend" id="legend"></div>
+  <details class="keybox" id="keybox">
+    <summary><span class="key-title">Key</span><span class="key-hint">Colors, dots and tags on the calendar</span></summary>
+    <div class="legend" id="legend"></div>
+  </details>
   <main id="main"></main>
 </div>
 <div id="overlay" hidden><div class="scrim" id="scrim"></div><aside class="sheet" id="sheet" role="dialog" aria-modal="true"></aside></div>
@@ -554,7 +572,7 @@ button { cursor: pointer; }
   function visitDot(k, t) {
     const v = VISIT[k];
     const interactive = !!t;
-    const title = t ? `${v.label}: ${t[k + "Who"] || "visit"}${t[k + "Time"] ? " at " + fmtTime(t[k + "Time"]) : ""} · ${t.title || "Untitled"}` : v.label;
+    const title = t ? `${v.label}: ${t[k + "Who"] || "visit"}${t[k + "Time"] ? " at " + fmtTime(t[k + "Time"]) : ""} · ${t.title || "Untitled"}${t[k + "Notes"] ? "\n" + t[k + "Notes"] : ""}` : v.label;
     const movable = !!(t && S.canWrite && S.db);
     const el = h("span", Object.assign({ class: "idot vdot" + (movable ? " movable" : ""), title }, interactive ? { role: "button", tabindex: "0", "aria-label": title,
       onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); },
@@ -588,7 +606,11 @@ button { cursor: pointer; }
     : (t.materials ? String(t.materials).split(/\n+/).map(x => x.trim()).filter(Boolean).map(name => ({ name, qty: "", status: t.matStatus || "needed", date: t.matDate || "" })) : []);
   const linePending = m => m.status !== "delivered";
   const matLate = t => !isDone(t) && matList(t).some(m => linePending(m) && (t.start <= iso(addDays(new Date(), 7)) || (m.date && m.date > t.start)));
-  const archOpen = t => !!t.archQ && !(t.archA || "").trim();
+  // Each job can hold several architect questions; older jobs stored one in archText / archA.
+  const archList = t => !t.archQ ? [] : Array.isArray(t.archQs) ? t.archQs.filter(x => x && (x.q || "").trim())
+    : ((t.archText || "").trim() ? [{ q: t.archText, a: t.archA || "", answeredAt: t.archAnsweredAt || "" }] : []);
+  const archOpenCount = t => archList(t).filter(x => !(x.a || "").trim()).length;
+  const archOpen = t => archOpenCount(t) > 0;
   const lineText = m => `${m.name}${m.qty ? " (" + m.qty + ")" : ""}`;
   const lineStatus = m => (MAT[m.status] || "Needed") + (m.date && m.status !== "delivered" ? `, expected ${fmtShort(m.date)}` : "");
   const fmtTime = v => { if (!v) return ""; const [hh, mm] = v.split(":").map(Number); const ap = hh >= 12 ? "PM" : "AM"; return `${((hh + 11) % 12) + 1}:${pad(mm)} ${ap}`; };
@@ -726,6 +748,7 @@ button { cursor: pointer; }
     const blocked = list.filter(t => !isDone(t) && t.start <= soon && waitingOn(t).length);
     const mats = list.filter(t => matLate(t));
     const archs = list.filter(t => archOpen(t));
+    const archQCount = archs.reduce((n, t) => n + archOpenCount(t), 0);
     const [a, b] = range(); const A = iso(a), B = iso(b);
     const inView = list.filter(t => t.start <= B && endOf(t) >= A);
     const budget = inView.reduce((s, t) => s + (Number(t.budget) || 0), 0);
@@ -738,7 +761,7 @@ button { cursor: pointer; }
       stat("Need a work order", String(noWO.length), "Starting within 14 days", noWO.length ? "warnish" : "", noWO.length ? noWO : null, "Needs a work order"),
       stat("Waiting on others", String(blocked.length), "Earlier work or inspection not done", blocked.length ? "warnish" : "", blocked.length ? blocked : null, "Waiting on other work"),
       stat("Materials not on site", String(mats.length), "Needed or ordered, work starts soon", mats.length ? "warnish" : "", mats.length ? mats : null, "Materials not delivered"),
-      stat("Architect questions", String(archs.length), archs.length ? "Waiting on an answer" : "None open", archs.length ? "alert" : "", archs.length ? archs : null, "Open architect questions"),
+      stat("Architect questions", String(archQCount), archQCount ? `Waiting on an answer · ${plural(archs.length, "job")}` : "None open", archs.length ? "alert" : "", archs.length ? archs : null, "Open architect questions"),
       stat("On site today", String(active.length), fmtDay(today), "", active.length ? active : null, "On site today"),
       stat(S.view === "month" ? "Budgeted this month" : "Budgeted this week", money(budget), `${inView.length} work item${inView.length === 1 ? "" : "s"} in view`, "", inView.length ? inView : null, S.view === "month" ? "This month" : "This week")
     );
@@ -823,8 +846,9 @@ button { cursor: pointer; }
     const st = effSt(t);
     const overdue = !isDone(t) && endOf(t) < todayIso();
     const waits = isDone(t) ? [] : waitingOn(t);
-    const visit = (lbl, time, who, n, dt) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
-      [dt ? fmtShort(dt) : "", fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set");
+    const visit = (lbl, time, who, n, dt, notes) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
+      [dt ? fmtShort(dt) : "", fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set",
+      notes ? [h("br"), h("i", { text: notes })] : null);
     const who = isInsp(t) ? (INSP_TYPE[t.inspType] || "Inspection") : (t.crew === "sub" ? "Sub" : "In-house");
     const ws = workersOf(t);
     const teamLine = (() => {
@@ -855,7 +879,7 @@ button { cursor: pointer; }
         t.obsTour ? h("span", { class: "chip obs", text: "Tour" }) : null,
         t.obsRequity ? h("span", { class: "chip obs", text: "Class" }) : null,
         t.media ? h("span", { class: "chip media", text: "Media requested" }) : null,
-        t.archQ ? h("span", { class: "chip arch" + (archOpen(t) ? "" : " ok"), text: archOpen(t) ? "Architect question open" : "Architect answered" }) : null,
+        archList(t).length ? h("span", { class: "chip arch" + (archOpen(t) ? "" : " ok"), text: archOpen(t) ? `${archOpenCount(t)} architect question${archOpenCount(t) === 1 ? "" : "s"} open` : "Architect answered" }) : null,
         h("span", { class: "pill " + st, text: isInsp(t) ? "Inspection " + (INSP[t.inspResult] || "Pending").toLowerCase() : STATUS[st] })),
       h("div", { class: "card-title", text: t.title || "Untitled work" }),
       teamLine,
@@ -871,10 +895,10 @@ button { cursor: pointer; }
             ml.length > shown.length ? h("li", { text: `+${ml.length - shown.length} more` }) : null));
       })(),
       t.notes ? h("div", { class: "card-sub" }, h("b", { text: "Notes: " }), t.notes) : null,
-      t.archQ ? h("div", { class: "card-sub" }, h("b", { text: "Architect Q: " }), t.archText || "No question written yet",
-        (t.archA || "").trim() ? [h("br"), h("b", { text: "Answer: " }), t.archA] : null) : null,
-      t.obsTour ? visit("Tour", t.tourTime, t.tourWho, t.tourCount, visitDate(t, "tour")) : null,
-      t.obsRequity ? visit("Class", t.reqTime, t.reqWho, t.reqCount, visitDate(t, "req")) : null,
+      ...archList(t).map((x, i, all) => h("div", { class: "card-sub" }, h("b", { text: all.length > 1 ? `Architect Q${i + 1}: ` : "Architect Q: " }), x.q,
+        (x.a || "").trim() ? [h("br"), h("b", { text: "Answer: " }), x.a] : null)),
+      t.obsTour ? visit("Tour", t.tourTime, t.tourWho, t.tourCount, visitDate(t, "tour"), t.tourNotes) : null,
+      t.obsRequity ? visit("Class", t.reqTime, t.reqWho, t.reqCount, visitDate(t, "req"), t.reqNotes) : null,
       t.media ? h("div", { class: "card-sub" }, h("b", { text: "Media: " }), t.mediaWhat || "Capture requested",
         isLink(t.mediaLink) ? [" · ", h("a", { href: t.mediaLink, target: "_blank", rel: "noopener noreferrer", onclick: e => e.stopPropagation(), text: "Open media" })] : " · No link yet") : null,
       h("div", { class: "card-foot" },
@@ -1149,17 +1173,19 @@ button { cursor: pointer; }
     const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
     const pn = id => (S.projects.get(id) || {}).name || "";
     const yn = v => v ? "Yes" : "No";
-    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Project coordinator", "Project lead", "Squadron leader", "Approved workers", "Subcontractors", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour date", "Tour time", "Tour visitors", "Tour headcount", "Class", "Class date", "Class time", "Class group", "Class headcount", "Media requested", "Media: what to capture", "Media link", "Architect question", "Architect question text", "Architect answer", "Answered on", "Notes"];
+    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Project coordinator", "Project lead", "Squadron leader", "Approved workers", "Subcontractors", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour date", "Tour time", "Tour visitors", "Tour headcount", "Tour comments", "Class", "Class date", "Class time", "Class group", "Class headcount", "Class comments", "Media requested", "Media: what to capture", "Media link", "Architect questions", "Questions", "Answers", "Answered on", "Notes"];
     const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", isInsp(t) ? "" : jobCoord(t), isInsp(t) ? "" : jobLead(t), t.squadLeader || "", workersOf(t).join(", "), subsOf(t).join(", "), t.start, endOf(t),
       STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget), numOrNull(t.actualCost) ?? "",
       matList(t).map(m => `${lineText(m)} - ${lineStatus(m)}`).join("; "),
       matList(t).length ? `${matList(t).filter(m => m.status === "delivered").length} of ${matList(t).length}` : "",
       matList(t).filter(m => linePending(m) && m.date).map(m => m.date).sort()[0] || "", isInsp(t) ? "" : yn(t.workOrder),
       (Array.isArray(t.dependsOn) ? t.dependsOn : []).map(id => S.tasks.get(id)).filter(Boolean).map(x => `${x.title || "Untitled"} (${depState(x)})`).join("; "),
-      yn(t.obsTour), t.obsTour ? visitDate(t, "tour") : "", t.obsTour ? fmtTime(t.tourTime) : "", t.obsTour ? (t.tourWho || "") : "", t.obsTour ? (t.tourCount ?? "") : "",
-      yn(t.obsRequity), t.obsRequity ? visitDate(t, "req") : "", t.obsRequity ? fmtTime(t.reqTime) : "", t.obsRequity ? (t.reqWho || "") : "", t.obsRequity ? (t.reqCount ?? "") : "",
+      yn(t.obsTour), t.obsTour ? visitDate(t, "tour") : "", t.obsTour ? fmtTime(t.tourTime) : "", t.obsTour ? (t.tourWho || "") : "", t.obsTour ? (t.tourCount ?? "") : "", t.obsTour ? (t.tourNotes || "") : "",
+      yn(t.obsRequity), t.obsRequity ? visitDate(t, "req") : "", t.obsRequity ? fmtTime(t.reqTime) : "", t.obsRequity ? (t.reqWho || "") : "", t.obsRequity ? (t.reqCount ?? "") : "", t.obsRequity ? (t.reqNotes || "") : "",
       yn(t.media), t.media ? (t.mediaWhat || "") : "", t.media ? (t.mediaLink || "") : "",
-      t.archQ ? (archOpen(t) ? "Open" : "Answered") : "No", t.archQ ? (t.archText || "") : "", t.archQ ? (t.archA || "") : "", t.archQ ? (t.archAnsweredAt || "") : "",
+      archList(t).length ? (archOpen(t) ? `${archOpenCount(t)} open of ${archList(t).length}` : "All answered") : "No",
+      archList(t).map((x, i) => `${i + 1}. ${x.q}`).join("\n"), archList(t).map((x, i) => `${i + 1}. ${(x.a || "").trim() || "(no answer yet)"}`).join("\n"),
+      archList(t).map((x, i) => `${i + 1}. ${x.answeredAt || ""}`).join("\n"),
       t.notes || ""]);
     const total = items.reduce((s, t) => s + (Number(t.budget) || 0), 0);
     const ws1 = XLSX.utils.aoa_to_sheet([head, ...rows, [], ["Totals", "", "", "", "", "", "", "", "", "", "", "", "", total, items.reduce((s, t) => s + (numOrNull(t.actualCost) || 0), 0)]]);
@@ -1839,12 +1865,14 @@ button { cursor: pointer; }
       const tm = h("input", { type: "time", id: `f-${key}-time`, value: d[key + "Time"] || "", disabled: ro });
       const who = h("input", { type: "text", id: `f-${key}-who`, placeholder: whoPh, value: d[key + "Who"] || "", disabled: ro, autocomplete: "off" });
       const n = h("input", { type: "text", id: `f-${key}-count`, inputmode: "numeric", placeholder: "0", value: d[key + "Count"] ?? "", disabled: ro, autocomplete: "off" });
+      const cm = h("textarea", { id: `f-${key}-notes`, rows: "2", placeholder: key === "tour" ? "e.g. Show the air sealing details; park on the street" : "e.g. Instructor wants students on the repointing; bring safety glasses", value: d[key + "Notes"] || "", disabled: ro });
       const box = h("div", { class: "visit-box v-" + key }, h("span", { class: "lbl", text: lbl + " visit" }),
         h("div", { class: "row2" }, field("Date", dt, `f-${key}-date`), field("Time", tm, `f-${key}-time`)),
-        h("div", { class: "row2", style: "grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)" }, field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)));
+        h("div", { class: "row2", style: "grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)" }, field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)),
+        field("Comments", cm, `f-${key}-notes`));
       box.hidden = !cb.checked;
       cb.addEventListener("change", () => { box.hidden = !cb.checked; if (cb.checked && !dt.value) dt.value = start.value; });
-      box.read = () => ({ date: dt.value, time: tm.value, who: who.value.trim(), count: n.value.trim() });
+      box.read = () => ({ notes: cm.value.trim(), date: dt.value, time: tm.value, who: who.value.trim(), count: n.value.trim() });
       box.countEl = n;
       return box;
     };
@@ -1852,18 +1880,42 @@ button { cursor: pointer; }
     const reqBox = visitBox("req", "Class", obsReq, "e.g. Requity carpentry cohort");
     const woRow = h("label", { class: "check-row", for: "f-wo" }, wo, "Work order has been created");
     const archCb = h("input", { type: "checkbox", id: "f-arch", checked: !!d.archQ, disabled: ro });
-    const archText = h("textarea", { id: "f-arch-q", rows: "3", placeholder: "What do you need the architect to clarify? (e.g. Header size over the new kitchen opening?)", value: d.archText || "", disabled: ro });
-    const archA = h("textarea", { id: "f-arch-a", rows: "3", placeholder: "Paste or type the architect's answer when it comes back", value: d.archA || "", disabled: ro });
-    const archState = h("span", { class: "arch-state" });
-    const syncArch = () => {
-      const ans = archA.value.trim();
-      archState.className = "arch-state " + (ans ? "ok" : "open");
-      archState.textContent = ans ? ("Answered" + (d.archAnsweredAt && d.archA && d.archA.trim() ? " on " + fmtShort(d.archAnsweredAt) : "")) : "Open, waiting on the architect";
+    const archRows = h("div", { class: "arch-list" });
+    let archSeq = 0;
+    const addArch = (x, focus) => {
+      const k = archSeq++;
+      const q = h("textarea", { id: `f-arch-q-${k}`, rows: "2", placeholder: "What do you need the architect to clarify? (e.g. Header size over the new kitchen opening?)", value: x.q || "", disabled: ro });
+      const a = h("textarea", { id: `f-arch-a-${k}`, rows: "2", placeholder: "Paste or type the architect's answer when it comes back", value: x.a || "", disabled: ro });
+      const st = h("span", { class: "arch-state" });
+      const num = h("span", { class: "arch-num" });
+      const sync = () => {
+        const ans = a.value.trim();
+        st.className = "arch-state " + (ans ? "ok" : "open");
+        st.textContent = ans ? ("Answered" + (x.answeredAt && (x.a || "").trim() ? " on " + fmtShort(x.answeredAt) : "")) : "Open, waiting on the architect";
+      };
+      a.addEventListener("input", sync); sync();
+      const row = h("div", { class: "arch-item" },
+        h("div", { class: "arch-head" }, num, st, ro ? null : h("button", { type: "button", class: "btn arch-del", onclick: () => { row.remove(); renumber(); } }, "Remove")),
+        field("Question", q, `f-arch-q-${k}`), field("Architect's answer", a, `f-arch-a-${k}`));
+      row.read = () => {
+        const qq = q.value.trim(), aa = a.value.trim();
+        if (!qq) return null;
+        return { q: qq, a: aa, answeredAt: aa ? ((x.a || "").trim() ? (x.answeredAt || todayIso()) : todayIso()) : "" };
+      };
+      row.qEl = q;
+      archRows.append(row); renumber();
+      if (focus) q.focus();
     };
-    archA.addEventListener("input", syncArch); syncArch();
-    const archBox = h("div", { class: "arch-box" }, archState, field("Question for the architect", archText, "f-arch-q"), field("Architect's answer", archA, "f-arch-a"));
+    const renumber = () => [...archRows.children].forEach((r, i, all) => { r.querySelector(".arch-num").textContent = all.length > 1 ? `Question ${i + 1}` : "Question"; });
+    archList(d).forEach(x => addArch(x));
+    if (!archRows.children.length && !ro) addArch({});
+    const archBox = h("div", { class: "arch-box" }, archRows,
+      ro ? null : h("button", { type: "button", class: "btn madd", onclick: () => addArch({}, true) }, "+ Add another question"));
     archBox.hidden = !d.archQ;
-    archCb.addEventListener("change", () => { archBox.hidden = !archCb.checked; if (archCb.checked) archText.focus(); });
+    archCb.addEventListener("change", () => {
+      archBox.hidden = !archCb.checked;
+      if (archCb.checked) { if (!archRows.children.length) addArch({}); archRows.querySelector("textarea").focus(); }
+    });
     const err = h("div", { class: "err", role: "alert" });
     const meta = h("div", { class: "hint" });
     const w = el => { workOnly.push(el); return el; };
@@ -1902,7 +1954,7 @@ button { cursor: pointer; }
       const c = Object.assign({}, S.tasks.get(t.id) || t);
       for (const k of ["id", "createdBy", "createdAt", "updatedBy", "updatedAt"]) delete c[k];
       Object.assign(c, { status: "scheduled", workOrder: false, inspResult: "pending", mediaLink: "", dependsOn: [],
-        materialsList: matList(c).map(m => ({ name: m.name, qty: m.qty || "", status: "needed", date: "" })), materials: "", matStatus: "", matDate: "", archQ: false, archText: "", archA: "", archAnsweredAt: "", actualCost: null, history: [] });
+        materialsList: matList(c).map(m => ({ name: m.name, qty: m.qty || "", status: "needed", date: "" })), materials: "", matStatus: "", matDate: "", archQ: false, archQs: [], archText: "", archA: "", archAnsweredAt: "", actualCost: null, history: [] });
       openTaskForm(null, c); toast("Copy ready. Change the date or details, then add it.");
     } }, "Duplicate") : null;
     const delBtn = editing && !ro ? h("button", { class: "btn danger", type: "button" }, "Delete") : null;
@@ -1934,7 +1986,8 @@ button { cursor: pointer; }
       if (ac !== "" && !/^\d+(\.\d{1,2})?$/.test(ac)) { err.textContent = "Enter the actual cost as a dollar amount, like 2500 or 2500.50."; actual.focus(); return; }
       const ml = mediaLink.value.trim();
       if (media.checked && ml && !isLink(ml)) { err.textContent = "The media link should be a full web address starting with https://, like a Google Drive share link."; mediaLink.focus(); return; }
-      if (archCb.checked && !archText.value.trim()) { err.textContent = "Write the question for the architect, or uncheck Architect question."; archText.focus(); return; }
+      const archQs = archCb.checked ? [...archRows.children].map(r => r.read()).filter(Boolean) : [];
+      if (archCb.checked && !archQs.length) { err.textContent = "Write at least one question for the architect, or uncheck Architect question."; const f = archRows.querySelector("textarea"); if (f) f.focus(); return; }
       const tv = tourBox.read(), rv = reqBox.read();
       for (const [v, box, lbl] of [[tv, tourBox, "Tour"], [rv, reqBox, "Class"]]) {
         if (!box.hidden && v.count !== "" && !/^\d+$/.test(v.count)) { err.textContent = `${lbl} headcount should be a whole number.`; box.countEl.focus(); return; }
@@ -1960,9 +2013,9 @@ button { cursor: pointer; }
         matStatus: "", matDate: "",
         inspResult: trade.value === "inspection" ? inspRes.value : "pending",
         dependsOn: deps.filter(id => S.tasks.has(id)),
-        archQ: archCb.checked, archText: archCb.checked ? archText.value.trim() : "", archA: archCb.checked ? archA.value.trim() : "",
-        archAnsweredAt: archCb.checked && archA.value.trim() ? ((d.archA || "").trim() ? (d.archAnsweredAt || todayIso()) : todayIso()) : "",
+        archQ: archCb.checked && archQs.length > 0, archQs, archText: "", archA: "", archAnsweredAt: "",
         tourDate: obsTour.checked ? (tv.date || start.value) : "", reqDate: obsReq.checked ? (rv.date || start.value) : "",
+        tourNotes: obsTour.checked ? tv.notes : "", reqNotes: obsReq.checked ? rv.notes : "",
         tourTime: obsTour.checked ? tv.time : "", tourWho: obsTour.checked ? tv.who : "", tourCount: obsTour.checked && tv.count !== "" ? Number(tv.count) : "",
         reqTime: obsReq.checked ? rv.time : "", reqWho: obsReq.checked ? rv.who : "", reqCount: obsReq.checked && rv.count !== "" ? Number(rv.count) : "",
         inspType: ins ? inspType.value : "",
@@ -1972,8 +2025,8 @@ button { cursor: pointer; }
         crew: "sub", assignee: "", workers: [], squadLeader: "", end: "", budget: null, materialsList: [], workOrder: false, dependsOn: [],
         status: inspRes.value === "pass" ? "done" : "scheduled",
         obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
-        archQ: false, archText: "", archA: "", archAnsweredAt: "",
-        tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: "", tourDate: "", reqDate: ""
+        archQ: false, archQs: [], archText: "", archA: "", archAnsweredAt: "",
+        tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: "", tourDate: "", reqDate: "", tourNotes: "", reqNotes: ""
       });
       if (ins) data.actualCost = null;
       if (editing) {
@@ -2171,6 +2224,8 @@ button { cursor: pointer; }
   $("btn-add").addEventListener("click", () => openTaskForm(null, {}));
   $("btn-projects").addEventListener("click", openProjects);
   $("btn-stats").addEventListener("click", openStats);
+  $("keybox").open = recall("key", "closed") === "open";
+  $("keybox").addEventListener("toggle", () => store("key", $("keybox").open ? "open" : "closed"));
   window.addEventListener("resize", () => { if (!$("overlay").hidden) applySheetW(); });
   $("cscrim").addEventListener("click", () => { if (S.cmodalCancel) S.cmodalCancel(); });
   $("btn-export").addEventListener("click", exportXlsx);

@@ -195,6 +195,8 @@ button { cursor: pointer; }
 .bar.movable { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .bar.moving { cursor: grabbing; opacity: .55; }
 .bar.armed { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sheet-b input:disabled, .sheet-b select:disabled, .sheet-b textarea:disabled { opacity: .55; cursor: not-allowed; }
+.check-row:has(input:disabled), .radio-seg:has(input:disabled) { opacity: .7; cursor: not-allowed; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px; min-height: 42px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); }
 .chips:focus-within { outline: 2px solid var(--accent); border-color: var(--accent); }
 .chip-n { display: inline-flex; align-items: center; gap: 2px; padding: 3px 4px 3px 9px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; font-weight: 500; max-width: 100%; overflow-wrap: anywhere; }
@@ -746,7 +748,7 @@ button { cursor: pointer; }
     let msg = "", btn = false;
     if (S.unavailable) msg = S.unavailableMsg || "The shared schedule couldn't load. Check your connection and reload the page.";
     else if (S.slow && !(S.loadedP && S.loadedT)) msg = "Still trying to reach the shared schedule. What you see may be incomplete or out of date.";
-    else if (S.ready && !S.canWrite) { msg = "You're viewing the schedule. To add or change work, unlock editing with the team passcode."; btn = true; }
+    else if (S.ready && !S.canWrite) { msg = "You're viewing the schedule. Open any job to add materials, tour or class details, architect questions or media. To change anything else, unlock editing with the team passcode."; btn = true; }
     $("banner-msg").textContent = msg; $("banner-btn").hidden = !btn; b.hidden = !msg;
     b.classList.toggle("info", btn);
     const who = $("who");
@@ -1767,6 +1769,9 @@ button { cursor: pointer; }
   async function openTaskForm(t, defaults) {
     const editing = !!t;
     const ro = !S.canWrite || !S.db;
+    // Locked devices may still fill in materials, tour, class, architect questions and media on an existing job (add and edit, never delete).
+    const lim = ro && !!S.db && !!S.uid && editing && t.trade !== "inspection";
+    const roS = ro && !lim;
     const d = Object.assign({
       projectId: S.project !== "all" ? S.project : (sortedProjects()[0] || {}).id || "__new",
       title: "", trade: S.trade !== "all" && S.trade !== "inspection" ? S.trade : "framing", crew: "inhouse", assignee: "",
@@ -1819,12 +1824,12 @@ button { cursor: pointer; }
     const mrows = h("div", { class: "mrows" });
     const addMat = (m, focus) => {
       const k = mseq++;
-      const nm = h("input", { type: "text", class: "mn", id: `m-name-${k}`, placeholder: "Material (e.g. 2x4x8 studs)", value: m.name || "", disabled: ro, autocomplete: "off", "aria-label": "Material" });
-      const qt = h("input", { type: "text", class: "mq", id: `m-qty-${k}`, placeholder: "Qty", value: m.qty || "", disabled: ro, autocomplete: "off", "aria-label": "Quantity" });
-      const st = sel(`m-st-${k}`, LINE_ST, m.status || "needed", { disabled: ro, class: "ms-sel", "aria-label": "Status" });
-      const dt = h("input", { type: "date", class: "md", id: `m-date-${k}`, value: m.date || "", disabled: ro, "aria-label": "Expected delivery", title: "Expected delivery" });
+      const nm = h("input", { type: "text", class: "mn", id: `m-name-${k}`, placeholder: "Material (e.g. 2x4x8 studs)", value: m.name || "", disabled: roS, autocomplete: "off", "aria-label": "Material" });
+      const qt = h("input", { type: "text", class: "mq", id: `m-qty-${k}`, placeholder: "Qty", value: m.qty || "", disabled: roS, autocomplete: "off", "aria-label": "Quantity" });
+      const st = sel(`m-st-${k}`, LINE_ST, m.status || "needed", { disabled: roS, class: "ms-sel", "aria-label": "Status" });
+      const dt = h("input", { type: "date", class: "md", id: `m-date-${k}`, value: m.date || "", disabled: roS, "aria-label": "Expected delivery", title: "Expected delivery" });
       const row = h("div", { class: "mrow" }, nm, qt, st, dt,
-        ro ? h("span") : h("button", { type: "button", class: "x", "aria-label": "Remove material", title: "Remove", onclick: () => { row.remove(); } }, "×"));
+        (roS || (lim && m.name)) ? h("span") : h("button", { type: "button", class: "x", "aria-label": "Remove material", title: "Remove", onclick: () => { row.remove(); } }, "×"));
       row.read = () => {
         const name = nm.value.trim(); if (!name) return null;
         let status = st.value; if (dt.value && status === "needed" && !m.status) status = "ordered";
@@ -1835,19 +1840,19 @@ button { cursor: pointer; }
     };
     const startMats = matList(d);
     startMats.forEach(m => addMat(m));
-    if (!startMats.length && !ro) addMat({});
+    if (!startMats.length && !roS) addMat({});
     const matField = h("div", { class: "field mat-box" }, h("span", { class: "lbl", text: "Materials" }),
       h("div", { class: "mhead" }, h("span", { text: "Material" }), h("span", { text: "Qty" }), h("span", { text: "Status" }), h("span", { text: "Expected delivery" }), h("span")),
       mrows,
-      ro ? (startMats.length ? null : h("span", { class: "hint", text: "No materials listed." }))
+      roS ? (startMats.length ? null : h("span", { class: "hint", text: "No materials listed." }))
          : h("button", { type: "button", class: "btn madd", onclick: () => addMat({}, true) }, "+ Add material"));
     const notes = h("textarea", { id: "f-notes", rows: "3", placeholder: "Access, inspections, who to call, anything the crew should know", value: d.notes || "", disabled: ro });
     const wo = h("input", { type: "checkbox", id: "f-wo", checked: !!d.workOrder, disabled: ro });
-    const obsTour = h("input", { type: "checkbox", id: "f-tour", checked: !!d.obsTour, disabled: ro });
-    const obsReq = h("input", { type: "checkbox", id: "f-req", checked: !!d.obsRequity, disabled: ro });
-    const media = h("input", { type: "checkbox", id: "f-media", checked: !!d.media, disabled: ro });
-    const mediaWhat = h("textarea", { id: "f-media-what", rows: "2", placeholder: "What to capture (e.g. before/after photos of the sill plate, 30-second clip of flashing install)", value: d.mediaWhat || "", disabled: ro });
-    const mediaLink = h("input", { type: "text", id: "f-media-link", inputmode: "url", placeholder: "Paste the Google Drive link", value: d.mediaLink || "", disabled: ro, autocomplete: "off" });
+    const obsTour = h("input", { type: "checkbox", id: "f-tour", checked: !!d.obsTour, disabled: roS || (lim && !!d.obsTour) });
+    const obsReq = h("input", { type: "checkbox", id: "f-req", checked: !!d.obsRequity, disabled: roS || (lim && !!d.obsRequity) });
+    const media = h("input", { type: "checkbox", id: "f-media", checked: !!d.media, disabled: roS || (lim && !!d.media) });
+    const mediaWhat = h("textarea", { id: "f-media-what", rows: "2", placeholder: "What to capture (e.g. before/after photos of the sill plate, 30-second clip of flashing install)", value: d.mediaWhat || "", disabled: roS });
+    const mediaLink = h("input", { type: "text", id: "f-media-link", inputmode: "url", placeholder: "Paste the Google Drive link", value: d.mediaLink || "", disabled: roS, autocomplete: "off" });
     const openLink = h("a", { target: "_blank", rel: "noopener noreferrer", class: "hint", text: "Open the link" });
     const syncLink = () => { const ok = isLink(mediaLink.value); openLink.hidden = !ok; if (ok) openLink.href = mediaLink.value.trim(); };
     mediaLink.addEventListener("input", syncLink); syncLink();
@@ -1897,11 +1902,11 @@ button { cursor: pointer; }
     projSel.addEventListener("change", () => { deps = []; drawDeps(); });
     // visits
     const visitBox = (key, lbl, cb, whoPh) => {
-      const dt = h("input", { type: "date", id: `f-${key}-date`, value: validDate(d[key + "Date"]) ? d[key + "Date"] : (d.start || ""), disabled: ro });
-      const tm = h("input", { type: "time", id: `f-${key}-time`, value: d[key + "Time"] || "", disabled: ro });
-      const who = h("input", { type: "text", id: `f-${key}-who`, placeholder: whoPh, value: d[key + "Who"] || "", disabled: ro, autocomplete: "off" });
-      const n = h("input", { type: "text", id: `f-${key}-count`, inputmode: "numeric", placeholder: "0", value: d[key + "Count"] ?? "", disabled: ro, autocomplete: "off" });
-      const cm = h("textarea", { id: `f-${key}-notes`, rows: "2", placeholder: key === "tour" ? "e.g. Show the air sealing details; park on the street" : "e.g. Instructor wants students on the repointing; bring safety glasses", value: d[key + "Notes"] || "", disabled: ro });
+      const dt = h("input", { type: "date", id: `f-${key}-date`, value: validDate(d[key + "Date"]) ? d[key + "Date"] : (d.start || ""), disabled: roS });
+      const tm = h("input", { type: "time", id: `f-${key}-time`, value: d[key + "Time"] || "", disabled: roS });
+      const who = h("input", { type: "text", id: `f-${key}-who`, placeholder: whoPh, value: d[key + "Who"] || "", disabled: roS, autocomplete: "off" });
+      const n = h("input", { type: "text", id: `f-${key}-count`, inputmode: "numeric", placeholder: "0", value: d[key + "Count"] ?? "", disabled: roS, autocomplete: "off" });
+      const cm = h("textarea", { id: `f-${key}-notes`, rows: "2", placeholder: key === "tour" ? "e.g. Show the air sealing details; park on the street" : "e.g. Instructor wants students on the repointing; bring safety glasses", value: d[key + "Notes"] || "", disabled: roS });
       const box = h("div", { class: "visit-box v-" + key }, h("span", { class: "lbl", text: lbl + " visit" }),
         h("div", { class: "row2" }, field("Date", dt, `f-${key}-date`), field("Time", tm, `f-${key}-time`)),
         h("div", { class: "row2", style: "grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)" }, field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)),
@@ -1915,13 +1920,13 @@ button { cursor: pointer; }
     const tourBox = visitBox("tour", "Tour", obsTour, "e.g. City Council staff, URA");
     const reqBox = visitBox("req", "Class", obsReq, "e.g. Requity carpentry cohort");
     const woRow = h("label", { class: "check-row", for: "f-wo" }, wo, "Work order has been created");
-    const archCb = h("input", { type: "checkbox", id: "f-arch", checked: !!d.archQ, disabled: ro });
+    const archCb = h("input", { type: "checkbox", id: "f-arch", checked: !!d.archQ, disabled: roS || (lim && !!d.archQ) });
     const archRows = h("div", { class: "arch-list" });
     let archSeq = 0;
     const addArch = (x, focus) => {
       const k = archSeq++;
-      const q = h("textarea", { id: `f-arch-q-${k}`, rows: "2", placeholder: "What do you need the architect to clarify? (e.g. Header size over the new kitchen opening?)", value: x.q || "", disabled: ro });
-      const a = h("textarea", { id: `f-arch-a-${k}`, rows: "2", placeholder: "Paste or type the architect's answer when it comes back", value: x.a || "", disabled: ro });
+      const q = h("textarea", { id: `f-arch-q-${k}`, rows: "2", placeholder: "What do you need the architect to clarify? (e.g. Header size over the new kitchen opening?)", value: x.q || "", disabled: roS });
+      const a = h("textarea", { id: `f-arch-a-${k}`, rows: "2", placeholder: "Paste or type the architect's answer when it comes back", value: x.a || "", disabled: roS });
       const st = h("span", { class: "arch-state" });
       const num = h("span", { class: "arch-num" });
       const sync = () => {
@@ -1931,7 +1936,7 @@ button { cursor: pointer; }
       };
       a.addEventListener("input", sync); sync();
       const row = h("div", { class: "arch-item" },
-        h("div", { class: "arch-head" }, num, st, ro ? null : h("button", { type: "button", class: "btn arch-del", onclick: () => { row.remove(); renumber(); } }, "Remove")),
+        h("div", { class: "arch-head" }, num, st, (roS || (lim && (x.q || "").trim())) ? null : h("button", { type: "button", class: "btn arch-del", onclick: () => { row.remove(); renumber(); } }, "Remove")),
         field("Question", q, `f-arch-q-${k}`), field("Architect's answer", a, `f-arch-a-${k}`));
       row.read = () => {
         const qq = q.value.trim(), aa = a.value.trim();
@@ -1944,9 +1949,9 @@ button { cursor: pointer; }
     };
     const renumber = () => [...archRows.children].forEach((r, i, all) => { r.querySelector(".arch-num").textContent = all.length > 1 ? `Question ${i + 1}` : "Question"; });
     archList(d).forEach(x => addArch(x));
-    if (!archRows.children.length && !ro) addArch({});
+    if (!archRows.children.length && !roS) addArch({});
     const archBox = h("div", { class: "arch-box" }, archRows,
-      ro ? null : h("button", { type: "button", class: "btn madd", onclick: () => addArch({}, true) }, "+ Add another question"));
+      roS ? null : h("button", { type: "button", class: "btn madd", onclick: () => addArch({}, true) }, "+ Add another question"));
     archBox.hidden = !d.archQ;
     archCb.addEventListener("change", () => {
       archBox.hidden = !archCb.checked;
@@ -1955,8 +1960,11 @@ button { cursor: pointer; }
     const err = h("div", { class: "err", role: "alert" });
     const meta = h("div", { class: "hint" });
     const w = el => { workOnly.push(el); return el; };
+    const limName = lim && !S.me ? h("input", { type: "text", id: "f-myname", placeholder: "So the team knows who updated this", autocomplete: "name" }) : null;
 
     const body = h("div", { class: "sheet-b" },
+      lim ? h("div", { class: "banner info" }, h("span", { text: "Editing is locked on this device. You can still add to and update Materials, Tour, Class, Architect questions and Media. Everything else is view-only." })) : null,
+      lim && !S.me ? field("Your name", limName, "f-myname") : null,
       field("Project", projSel, "f-proj"), newBox,
       h("div", { class: "row2" }, tradeCell, crewCell, inspTypeCell),
       w(field("Work to be done", title, "f-title")),
@@ -2007,7 +2015,47 @@ button { cursor: pointer; }
       }
     });
     const saveBtn = ro ? null : h("button", { class: "btn primary", type: "button" }, editing ? "Save changes" : "Add to schedule");
-    const foot = h("div", { class: "sheet-f" }, leftBox, h("button", { class: "btn", type: "button", onclick: closeSheet }, ro ? "Close" : "Cancel"), saveBtn);
+    const limBtn = lim ? h("button", { class: "btn primary", type: "button" }, "Save updates") : null;
+    const foot = h("div", { class: "sheet-f" }, leftBox, h("button", { class: "btn", type: "button", onclick: closeSheet }, ro && !lim ? "Close" : "Cancel"), saveBtn, limBtn);
+    if (limBtn) limBtn.addEventListener("click", async () => {
+      err.textContent = "";
+      if (limName) {
+        const n = limName.value.trim();
+        if (!n) { err.textContent = "Enter your name before saving."; limName.focus(); return; }
+        S.me = n; store("name", n);
+      }
+      const ml = mediaLink.value.trim();
+      if (media.checked && ml && !isLink(ml)) { err.textContent = "The media link should be a full web address starting with https://, like a Google Drive share link."; mediaLink.focus(); return; }
+      const tv = tourBox.read(), rv = reqBox.read();
+      for (const [v, box, lbl] of [[tv, tourBox, "Tour"], [rv, reqBox, "Class"]]) {
+        if (!box.hidden && v.count !== "" && !/^\d+$/.test(v.count)) { err.textContent = `${lbl} headcount should be a whole number.`; box.countEl.focus(); return; }
+      }
+      const cur = S.tasks.get(t.id) || t;
+      const mats = [...mrows.children].map(r => r.read && r.read()).filter(Boolean);
+      const qs = archCb.checked ? [...archRows.children].map(r => r.read()).filter(Boolean) : [];
+      if (archCb.checked && !qs.length) { err.textContent = "Write at least one question for the architect, or uncheck Architect question."; const f = archRows.querySelector("textarea"); if (f) f.focus(); return; }
+      if (mats.length < matList(cur).length) { err.textContent = "Material lines can't be cleared while editing is locked. Put the name back, or unlock editing to remove a line."; return; }
+      if (qs.length < archList(cur).length) { err.textContent = "Architect questions can't be cleared while editing is locked. Put the question back, or unlock editing to remove it."; return; }
+      const upd = {
+        materialsList: mats, materials: "",
+        obsTour: obsTour.checked, obsRequity: obsReq.checked, media: media.checked,
+        archQ: archCb.checked && qs.length > 0, archQs: qs, archText: "", archA: "", archAnsweredAt: "",
+        mediaWhat: media.checked ? mediaWhat.value.trim() : "", mediaLink: media.checked ? ml : "",
+        ...stamp()
+      };
+      if (obsTour.checked) Object.assign(upd, { tourDate: tv.date || cur.start, tourTime: tv.time, tourWho: tv.who, tourCount: tv.count !== "" ? Number(tv.count) : "", tourNotes: tv.notes });
+      if (obsReq.checked) Object.assign(upd, { reqDate: rv.date || cur.start, reqTime: rv.time, reqWho: rv.who, reqCount: rv.count !== "" ? Number(rv.count) : "", reqNotes: rv.notes });
+      limBtn.disabled = true;
+      try {
+        await S.db.doc("tasks/" + t.id).update(upd);
+        toast("Updates saved"); closeSheet();
+      } catch (e) {
+        limBtn.disabled = false;
+        err.textContent = e && e.code === "permission-denied"
+          ? "This update wasn't allowed. The schedule's security rules may need updating; ask the project coordinator."
+          : "Couldn't save. Check your connection and try again.";
+      }
+    });
 
     if (saveBtn) saveBtn.addEventListener("click", async () => {
       err.textContent = "";
@@ -2094,7 +2142,7 @@ button { cursor: pointer; }
     });
 
     const noun = inspForm ? "inspection" : "work";
-    openSheet(editing ? (ro ? (inspForm ? "Inspection" : "Work item") : "Edit " + noun) : (defaults && defaults.title ? "Duplicate " + noun : "Add " + noun), body, foot, null);
+    openSheet(editing ? (lim ? "Update work" : ro ? (inspForm ? "Inspection" : "Work item") : "Edit " + noun) : (defaults && defaults.title ? "Duplicate " + noun : "Add " + noun), body, foot, null);
 
     if (editing && !ro && Array.isArray(t.history) && t.history.length) {
       meta.after(h("div", { class: "proj-actions" },

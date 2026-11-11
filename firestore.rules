@@ -8,6 +8,25 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/editors/$(request.auth.uid));
     }
 
+    // Fields a locked (view-only) device is allowed to change on an existing job.
+    function lockedUpdateOk() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return after.diff(before).affectedKeys().hasOnly([
+          'materialsList', 'materials',
+          'obsTour', 'tourDate', 'tourTime', 'tourWho', 'tourCount', 'tourNotes',
+          'obsRequity', 'reqDate', 'reqTime', 'reqWho', 'reqCount', 'reqNotes',
+          'archQ', 'archQs', 'archText', 'archA', 'archAnsweredAt',
+          'media', 'mediaWhat', 'mediaLink',
+          'updatedBy', 'updatedAt'])
+        && after.get('materialsList', []).size() >= before.get('materialsList', []).size()
+        && after.get('archQs', []).size() >= before.get('archQs', []).size()
+        && !(before.get('obsTour', false) == true && after.get('obsTour', false) != true)
+        && !(before.get('obsRequity', false) == true && after.get('obsRequity', false) != true)
+        && !(before.get('media', false) == true && after.get('media', false) != true)
+        && !(before.get('archQ', false) == true && after.get('archQ', false) != true);
+    }
+
     // The team passcode lives here. Nobody can read it from the page.
     match /config/{doc} {
       allow read, write: if false;
@@ -35,6 +54,8 @@ service cloud.firestore {
     match /tasks/{id} {
       allow read: if true;
       allow write: if isEditor();
+      // Locked devices may add to and update these sections of an existing job, but not delete from them.
+      allow update: if request.auth != null && lockedUpdateOk();
     }
     match /logs/{id} {
       allow read: if true;

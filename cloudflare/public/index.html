@@ -1,0 +1,2648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Job Site Schedule</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+/* Layout: sticky job-board header, a needs-attention strip, then a month grid with trade-colored spans or a week list of work cards. Edits open in a side sheet. */
+:root {
+  --bg: #e9edf1;
+  --surface: #ffffff;
+  --surface-2: #f5f7f9;
+  --ink: #17202a;
+  --muted: #5a6775;
+  --line: #d3dae2;
+  --accent: #1d4fd0;
+  --accent-ink: #ffffff;
+  --danger: #c0371f;
+  --warn: #a96400;
+  --ok: #1d7a45;
+  --scrim: rgba(12, 18, 26, .45);
+  --f-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --t-appliances: #6b5b95;
+  --t-exterior: #7a6a4f;
+  --t-cabinets: #5f8a1f;
+  --t-demolition: #5b5f68;
+  --t-drywall: #8a68ad;
+  --t-electrical: #b98d00;
+  --t-flooring: #8c5a2b;
+  --t-framing: #c2650f;
+  --t-hvac: #0d8585;
+  --t-inspection: #20262e;
+  --t-insulation: #b0466f;
+  --t-masonry: #9a3b2b;
+  --t-cleaning: #2f8a6b;
+  --t-landscape: #3c7a26;
+  --t-painting: #4255b8;
+  --t-plumbing: #1f6db0;
+  --t-punchout: #a03a9a;
+  --t-roofing: #2e4a5c;
+  --t-safety: #c03e1f;
+  --t-trim: #946b10;
+  --t-windows: #2f97cf;
+  --tour: #6c3ad1;
+  --class: #0e7490;
+  --vglyph: #ffffff;
+  --insp-silver: #c9ced5;
+  --insp-rim: #8e959e;
+  --insp-pass: #1e9a4b;
+  --insp-fail: #d32f2a;
+  --insp-pend: #c98a00;
+  --t-other: #6f6878;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --surface-2: #202832; --ink: #e6ebf0; --muted: #9aa7b4; --line: #303a46;
+    --accent: #6f95ff; --accent-ink: #0d1420; --danger: #f07a62; --warn: #e6a640; --ok: #5fc38a; --scrim: rgba(0,0,0,.6);
+    --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2; --tour: #a684f2; --class: #3bb6d3; --vglyph: #12171d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --surface-2: #202832; --ink: #e6ebf0; --muted: #9aa7b4; --line: #303a46;
+  --accent: #6f95ff; --accent-ink: #0d1420; --danger: #f07a62; --warn: #e6a640; --ok: #5fc38a; --scrim: rgba(0,0,0,.6);
+  --t-appliances: #a99be0; --t-exterior: #c9b48d; --t-cabinets: #9cc95a; --t-demolition: #a5abb6; --t-drywall: #bb9be0; --t-electrical: #e8c440; --t-flooring: #d49a63; --t-framing: #e9954a; --t-hvac: #45c4c0; --t-inspection: #dfe5ec; --t-insulation: #ec8fb2; --t-masonry: #e07a66; --t-cleaning: #6fd0a8; --t-landscape: #80c766; --t-painting: #97a6f2; --t-plumbing: #63a8ec; --t-punchout: #de86d8; --t-roofing: #8fb0c6; --t-safety: #f2876a; --t-trim: #d7b158; --t-windows: #6cc6f2; --t-other: #b8b0c2; --tour: #a684f2; --class: #3bb6d3; --vglyph: #12171d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.app { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--bg); padding-block: 14px 10px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
+.brand-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand h1 { font-family: var(--f-display); font-weight: 700; font-size: 30px; line-height: 1; margin: 0; letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.nav { display: flex; align-items: center; gap: 4px; }
+.period { font-family: var(--f-display); font-weight: 600; font-size: 22px; margin: 0 8px 0 6px; min-width: 9ch; white-space: nowrap; }
+.spacer { flex: 1 1 auto; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 7px; height: 36px; padding: 0 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.icon { width: 36px; padding: 0; justify-content: center; font-size: 18px; line-height: 1; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+.btn.danger.solid { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.select { height: 36px; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 0 8px; max-width: 100%; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; height: 34px; padding: 0 12px; font-weight: 500; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* Banner */
+.banner { border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line)); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+
+/* Attention strip */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.stat { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; display: grid; gap: 2px; }
+.stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.stat .v { font-family: var(--f-display); font-size: 28px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.stat .s { font-size: 12px; color: var(--muted); }
+.stat.alert .v { color: var(--danger); }
+.stat.warnish .v { color: var(--warn); }
+.stat.clickable:hover { border-color: var(--muted); }
+.stat:not(.clickable) { cursor: default; }
+
+/* Legend */
+.keybox { border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.keybox > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 12px; user-select: none; }
+.keybox > summary::-webkit-details-marker { display: none; }
+.keybox > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; flex: none; }
+.keybox[open] > summary::before { transform: rotate(45deg); }
+.keybox > summary:hover .key-title { color: var(--accent); }
+.key-title { font-weight: 600; font-size: 13px; }
+.key-hint { font-size: 12px; color: var(--muted); }
+.keybox[open] .key-hint { display: none; }
+.keybox .legend { padding: 2px 12px 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--t); display: inline-block; }
+
+/* Trade color binding */
+.t-appliances { --t: var(--t-appliances); }
+.t-exterior { --t: var(--t-exterior); }
+.t-cabinets { --t: var(--t-cabinets); }
+.t-demolition { --t: var(--t-demolition); }
+.t-drywall { --t: var(--t-drywall); }
+.t-electrical { --t: var(--t-electrical); }
+.t-flooring { --t: var(--t-flooring); }
+.t-framing { --t: var(--t-framing); }
+.t-hvac { --t: var(--t-hvac); }
+.t-inspection { --t: var(--t-inspection); }
+.t-insulation { --t: var(--t-insulation); }
+.t-masonry { --t: var(--t-masonry); }
+.t-cleaning { --t: var(--t-cleaning); }
+.t-landscape { --t: var(--t-landscape); }
+.t-painting { --t: var(--t-painting); }
+.t-plumbing { --t: var(--t-plumbing); }
+.t-punchout { --t: var(--t-punchout); }
+.t-roofing { --t: var(--t-roofing); }
+.t-safety { --t: var(--t-safety); }
+.t-trim { --t: var(--t-trim); }
+.t-windows { --t: var(--t-windows); }
+.t-other { --t: var(--t-other); }
+.bar.t-inspection { border-width: 2px; font-weight: 600; }
+
+/* Month grid */
+.month { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.dow div { padding: 6px 8px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.week { --lanes: 3; --lane: 24px; --head: 28px; --foot: 14px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: var(--head) repeat(var(--lanes), var(--lane)) var(--foot); position: relative; }
+.week + .week { border-top: 1px solid var(--line); }
+.cell { grid-row: 1 / -1; border: 0; border-left: 1px solid var(--line); background: transparent; text-align: left; padding: 4px 6px; display: flex; align-items: flex-start; z-index: 0; min-width: 0; }
+.cell:first-of-type { border-left: 0; }
+.cell:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.cell.out { background: var(--surface-2); color: var(--muted); }
+.cell.past .num { color: var(--muted); }
+.num { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 999px; }
+.cell.today .num { background: var(--accent); color: var(--accent-ink); }
+.bar {
+  position: relative; z-index: 1; margin: 1px 3px; min-width: 0; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--t) 50%, transparent);
+  background: color-mix(in srgb, var(--t) 17%, var(--surface)); color: color-mix(in srgb, var(--t) 65%, var(--ink));
+  display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-align: left;
+}
+.bar:hover { background: color-mix(in srgb, var(--t) 28%, var(--surface)); }
+.hdl { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; touch-action: none; z-index: 2; }
+.hdl.l { left: 0; } .hdl.r { right: 0; }
+.hdl::after { content: ""; position: absolute; top: 3px; bottom: 3px; width: 3px; border-radius: 2px; background: currentColor; opacity: 0; transition: opacity .12s; }
+.hdl.l::after { left: 2px; } .hdl.r::after { right: 2px; }
+.bar:hover .hdl::after, .hdl:active::after { opacity: .55; }
+@media (hover: none) { .hdl::after { opacity: .35; } .hdl { width: 12px; } }
+.bar.movable { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.bar.moving { cursor: grabbing; opacity: .55; }
+.bar.armed { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sheet-b input:disabled, .sheet-b select:disabled, .sheet-b textarea:disabled { opacity: .55; cursor: not-allowed; }
+.check-row:has(input:disabled), .radio-seg:has(input:disabled) { opacity: .7; cursor: not-allowed; }
+.team-box { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.team-box > .lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.nlog, .flist { display: grid; gap: 6px; }
+.nitem { padding: 8px 10px; border-radius: 7px; background: var(--surface); border: 1px solid var(--line); display: grid; gap: 3px; }
+.ntext { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13.5px; }
+.nmeta { font-size: 11.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.fitem { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 7px; background: var(--surface); border: 1px solid var(--line); flex-wrap: wrap; }
+.fthumb { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; flex: none; background: var(--surface-2); display: grid; place-items: center; }
+.fthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ficon { font-family: var(--f-mono); font-size: 10px; font-weight: 600; color: var(--muted); text-decoration: none; border: 1px solid var(--line); }
+.fmain { flex: 1 1 160px; min-width: 0; display: grid; gap: 2px; }
+.fname { font-weight: 600; font-size: 13.5px; color: var(--accent); overflow-wrap: anywhere; }
+.linkbtn { border: 0; background: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--accent); cursor: pointer; }
+.linkbtn.danger { color: var(--danger); }
+.btn.disabled { opacity: .5; pointer-events: none; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px; min-height: 42px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); }
+.chips:focus-within { outline: 2px solid var(--accent); border-color: var(--accent); }
+.chip-n { display: inline-flex; align-items: center; gap: 2px; padding: 3px 4px 3px 9px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; font-weight: 500; max-width: 100%; overflow-wrap: anywhere; }
+.chip-n button { border: 0; background: transparent; color: var(--muted); font-size: 15px; line-height: 1; width: 22px; height: 22px; border-radius: 50%; }
+.chip-n button:hover { color: var(--danger); }
+.chips input { flex: 1 1 140px; min-width: 120px; border: 0 !important; background: transparent !important; outline: none !important; min-height: 30px !important; padding: 4px !important; }
+.team { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.team b { color: var(--ink); font-weight: 600; }
+.cell.drag-on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.draglbl { position: fixed; z-index: 45; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+#cmodal .scrim { z-index: 30; }
+.cbox { position: fixed; z-index: 31; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100% - 24px)); max-height: calc(100% - 32px); background: var(--surface); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 18px 50px rgba(0,0,0,.3); overflow: hidden; }
+.cbox .sheet-b { overflow-y: auto; }
+.csec { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.csum { font-size: 14px; }
+.rgroup { display: grid; gap: 6px; }
+.ropt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+.ropt:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.ropt input { margin: 3px 0 0; accent-color: var(--accent); }
+.ropt span { display: grid; gap: 1px; }
+.ropt small { color: var(--muted); font-size: 12px; }
+.sheet.wide { width: min(780px, 100%); }
+.name-group { display: grid; gap: 8px; }
+.name-group + .name-group { margin-top: 6px; }
+.rec { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 9px; flex-wrap: wrap; }
+.rec.open { border-color: var(--accent); }
+.rec-main { display: grid; gap: 6px; min-width: 0; flex: 1 1 260px; font-size: 13.5px; }
+.rec-top { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.rec-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.rec-tags .pill { margin-left: 0; }
+.rec-acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.sheet-grip { position: absolute; left: -5px; top: 0; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; z-index: 3; }
+.sheet-grip::after { content: ""; position: absolute; left: 4px; top: 50%; height: 44px; margin-top: -22px; width: 4px; border-radius: 3px; background: var(--muted); opacity: .35; transition: opacity .12s, height .12s; }
+.sheet-grip:hover::after, .sheet.resizing .sheet-grip::after { opacity: .8; height: 72px; margin-top: -36px; }
+.sheet.resizing { transition: none; user-select: none; }
+.sheet-h .acts { display: flex; gap: 6px; }
+@media (max-width: 720px) { .sheet-grip, .btn-expand { display: none !important; } .sheet { width: 100% !important; } }
+.sheet-b { grid-template-columns: minmax(0, 1fr); }
+.sheet-b p { margin: 0; }
+.sheet.wide .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.sth { margin: 8px 0 0; font-family: var(--f-display); font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; }
+.tscroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.stbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stbl th, .stbl td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.stbl th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); font-weight: 600; }
+.stbl tr:last-child td { border-bottom: 0; }
+.stbl .n { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 12.5px; }
+.stbl th.n { font-family: var(--f-body); font-size: 11px; }
+.money.over { color: var(--danger); } .money.under { color: var(--ok); }
+.bar .code { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .03em; flex: none; }
+.bar .ttl { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bar.cl { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; border-left-style: dashed; }
+.bar.cr { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 0; border-right-style: dashed; }
+.bar.st-done { opacity: .5; }
+.bar.st-done .ttl { text-decoration: line-through; }
+.bar.st-delayed { border-color: var(--danger); background-image: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--danger) 20%, transparent) 5px 8px); }
+.bar .live { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.bar .tags, .card-tags { display: inline-flex; gap: 3px; flex: none; }
+.tag { font-family: var(--f-mono); font-size: 9px; font-weight: 600; letter-spacing: .03em; padding: 0 3px; border-radius: 3px; line-height: 1.45; background: var(--ink); color: var(--bg); }
+.tag.media { background: var(--accent); color: var(--accent-ink); }
+.tag.warn { background: var(--warn); color: var(--bg); }
+.tag.arch { background: var(--danger); color: #fff; }
+.chip.arch { border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
+.chip.arch.ok { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); color: var(--ok); background: color-mix(in srgb, var(--ok) 8%, var(--surface)); }
+.arch-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--danger); border-radius: 8px; }
+.arch-state { font-size: 12px; font-weight: 600; }
+.arch-list { display: grid; gap: 10px; }
+.arch-item { display: grid; gap: 8px; padding: 10px; border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--line)); border-radius: 8px; background: var(--surface); }
+.arch-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.arch-num { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--danger); }
+.arch-del { margin-left: auto; height: 30px; padding: 0 10px; font-size: 12.5px; }
+.arch-state.open { color: var(--danger); } .arch-state.ok { color: var(--ok); }
+.deps { display: flex; flex-wrap: wrap; gap: 6px; }
+.dep { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; padding: 3px 4px 3px 8px; border-radius: 6px; border: 1px solid var(--line); max-width: 100%; overflow-wrap: anywhere; }
+.dep.wait { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, var(--line)); }
+.dep.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+.dep .x { border: 0; background: transparent; font-size: 16px; line-height: 1; padding: 0 4px; color: inherit; }
+.waitline { font-size: 12.5px; color: var(--warn); font-weight: 600; overflow-wrap: anywhere; }
+.matline .ms { font-weight: 600; }
+.matlist { margin: 2px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12.5px; color: var(--muted); }
+.matlist li { display: flex; gap: 6px; flex-wrap: wrap; overflow-wrap: anywhere; }
+.matlist .nm { color: var(--ink); }
+.ms { font-weight: 600; }
+.ms.needed, .ms.ordered { color: var(--warn); }
+.ms.delivered { color: var(--ok); }
+.mrows { display: grid; gap: 8px; }
+.mrow { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, 1.4fr) auto; gap: 6px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.mrow input, .mrow select { width: 100%; min-height: 36px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+.mrow input:focus, .mrow select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.mrow .x { border: 0; background: transparent; font-size: 18px; color: var(--muted); width: 30px; height: 36px; }
+.mrow .x:hover { color: var(--danger); }
+.mhead { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, 1.4fr) 30px; gap: 6px; padding: 0 9px; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.madd { justify-self: start; }
+.matline .ms.needed, .matline .ms.ordered { color: var(--warn); }
+.matline .ms.delivered { color: var(--ok); }
+.idots { display: inline-flex; gap: 3px; align-items: center; margin-left: 4px; height: 22px; flex-wrap: wrap; min-width: 0; }
+.idot { width: 18px; height: 18px; display: inline-block; cursor: pointer; border-radius: 50%; flex: none; }
+.idot.movable { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.idot.moving, .idot.armed { outline: 2px solid var(--accent); outline-offset: 1px; }
+.vdot svg circle:first-child { stroke: color-mix(in srgb, var(--ink) 18%, transparent); stroke-width: .8; }
+.idot svg { display: block; width: 100%; height: 100%; }
+.idot:hover { transform: scale(1.12); }
+.idot:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.imore { display: none; font-size: 9px; font-weight: 700; color: var(--muted); }
+.legend .idot { width: 14px; height: 14px; cursor: default; }
+.legend .idot:hover { transform: none; }
+.logmark { margin-left: auto; font-family: var(--f-mono); font-size: 9px; font-weight: 600; padding: 1px 4px; border-radius: 3px; border: 1px solid var(--muted); color: var(--muted); line-height: 1.3; }
+.cell.today .logmark { border-color: var(--accent); color: var(--accent); }
+.logrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; flex-wrap: wrap; }
+.logrow b { display: block; }
+.logrow .hint { display: block; }
+.day-h .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.row3 { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; }
+.visit-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--line); border-radius: 8px; }
+.visit-box.v-tour { border-color: var(--tour); }
+.visit-box.v-req { border-color: var(--class); }
+.visit-box.v-tour > .lbl { color: var(--tour); }
+.visit-box.v-req > .lbl { color: var(--class); }
+.mat-box { padding: 12px; border: 2px dashed var(--warn); border-radius: 8px; }
+.mat-box > .lbl { color: var(--warn); }
+.visit-box .lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.chip.obs { border-color: var(--ink); color: var(--ink); background: var(--surface); }
+.chip.media { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.card-sub a { color: var(--accent); font-weight: 600; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.check-row.plain input { accent-color: var(--accent); }
+.media-box { display: grid; gap: 10px; padding: 12px; border: 2px dashed var(--accent); border-radius: 8px; }
+.legend .tag { display: inline-block; }
+.bar .nowo { flex: none; font-family: var(--f-mono); font-size: 9px; border: 1px solid currentColor; border-radius: 3px; padding: 0 2px; line-height: 1.2; opacity: .8; }
+.more { grid-row: 5; font-size: 11px; color: var(--muted); padding: 0 8px; pointer-events: none; z-index: 1; white-space: nowrap; overflow: hidden; }
+
+/* Week list */
+.weeklist { display: grid; gap: 10px; }
+.day { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.day-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.day-h h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 19px; letter-spacing: .01em; }
+.day-h h3 small { font-family: var(--f-body); font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+.day.today .day-h { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.day.today .day-h h3 { color: var(--accent); }
+.day.past { opacity: .88; }
+.day-items { padding: 10px; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.empty-day { color: var(--muted); font-size: 13px; padding: 2px 4px; }
+
+/* Work card */
+.card { position: relative; border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px 10px 14px; display: grid; gap: 6px; background: var(--surface); cursor: pointer; min-width: 0; overflow: hidden; }
+.card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--t); }
+.card:hover { border-color: var(--muted); }
+.card.st-done { opacity: .7; }
+.card-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; border-radius: 5px; padding: 2px 7px; border: 1px solid var(--line); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.trade { background: color-mix(in srgb, var(--t) 15%, var(--surface)); color: color-mix(in srgb, var(--t) 65%, var(--ink)); border-color: color-mix(in srgb, var(--t) 40%, transparent); }
+.chip .code { font-family: var(--f-mono); font-size: 10px; }
+.chip.sub { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.pill { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px; margin-left: auto; }
+.pill.scheduled { color: var(--muted); background: var(--surface-2); }
+.pill.progress { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+.pill.done { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, var(--surface)); }
+.pill.delayed { color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, var(--surface)); }
+.card-title { font-weight: 600; font-size: 14.5px; overflow-wrap: anywhere; }
+.st-done .card-title { text-decoration: line-through; }
+.card-meta { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.late { color: var(--danger); font-weight: 600; }
+.card-sub { font-size: 12.5px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.card-sub b { color: var(--ink); font-weight: 600; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.money { font-family: var(--f-mono); font-weight: 600; font-variant-numeric: tabular-nums; font-size: 13px; }
+.money.none { color: var(--muted); font-family: var(--f-body); font-weight: 400; font-size: 12px; }
+.wo { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 3px 8px; border-radius: 6px; }
+.wo.missing { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, var(--surface)); }
+.wo.has { color: var(--ok); }
+.wo input { width: 16px; height: 16px; margin: 0; accent-color: var(--ok); }
+
+/* Empty / loading */
+.state { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 28px 22px; display: grid; gap: 10px; justify-items: start; }
+.state h2 { margin: 0; font-family: var(--f-display); font-size: 24px; font-weight: 700; }
+.state p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+/* Sheet */
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 20; }
+.sheet { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100%); background: var(--surface); z-index: 21; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,.18);
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.sheet-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.sheet-h h2 { margin: 0; font-family: var(--f-display); font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; }
+.sheet-b { flex: 1 1 auto; overflow-y: auto; padding: 16px 18px; display: grid; gap: 14px; align-content: start; }
+.sheet-f { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface-2); }
+.sheet-f .left { margin-right: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field > label, .field > .lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.field input[type="text"], .field input[type="date"], .field input[type="time"], .field input[type="password"], .field select, .field textarea {
+  width: 100%; min-height: 40px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 7px; padding: 8px 10px; min-width: 0;
+}
+.field textarea { resize: vertical; line-height: 1.45; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.radio-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.radio-seg label { display: flex; align-items: center; justify-content: center; min-height: 40px; font-weight: 600; cursor: pointer; background: var(--surface-2); }
+.radio-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.radio-seg input:checked + span { color: var(--accent-ink); }
+.radio-seg label:has(input:checked) { background: var(--ink); color: var(--bg); }
+.radio-seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.money-in { position: relative; }
+.money-in span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-family: var(--f-mono); }
+.money-in input { padding-left: 22px !important; font-family: var(--f-mono); }
+.check-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); font-weight: 600; cursor: pointer; }
+.check-row input { width: 18px; height: 18px; accent-color: var(--ok); margin: 0; }
+.hint { font-size: 12px; color: var(--muted); }
+.err { color: var(--danger); font-size: 13px; font-weight: 500; }
+.newproj { display: grid; gap: 10px; padding: 12px; border: 1px dashed var(--line); border-radius: 8px; }
+.list { display: grid; gap: 8px; }
+.proj { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.proj-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.section-lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; z-index: 40; font-size: 13px; font-weight: 500; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+
+@media (max-width: 720px) {
+  .brand h1 { font-size: 26px; }
+  .period { font-size: 19px; min-width: 0; }
+  .controls .select { flex: 1 1 140px; }
+  .week { --lane: 17px; --head: 26px; --foot: 10px; }
+  .bar { font-size: 10px; padding: 0 3px; margin: 1px 1px; border-radius: 3px; }
+  .bar .ttl, .bar .nowo { display: none; }
+  .bar .tag { font-size: 0; width: 5px; height: 5px; padding: 0; border-radius: 50%; }
+  .checks { grid-template-columns: 1fr; }
+  .row3 { grid-template-columns: 1fr 1fr; }
+  .mhead { display: none; }
+  .mrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30px; }
+  .mrow .mn { grid-column: 1 / 3; }
+  .mrow .x { grid-column: 3; grid-row: 1; }
+  .mrow .mq { grid-column: 1; } .mrow .ms-sel { grid-column: 2; } .mrow .md { grid-column: 1 / 3; }
+  .row3 > :nth-child(2) { grid-column: 1 / -1; grid-row: 1; }
+  .idot { width: 13px; height: 13px; }
+  .ropt { padding: 7px 8px; }
+  .idots .idot ~ .idot { display: none; }
+  .imore { display: inline; }
+  .idots { gap: 1px; margin-left: 1px; height: 20px; flex-wrap: nowrap; overflow: hidden; }
+  .cell { padding: 3px 3px; }
+  .logmark { font-size: 0; width: 6px; height: 6px; padding: 0; border-radius: 50%; background: var(--muted); }
+  .bar .code { font-size: 9px; }
+  .more { font-size: 10px; padding: 0 4px; }
+  .num { width: 20px; height: 20px; font-size: 11px; }
+  .dow div { padding: 5px 4px; font-size: 10px; letter-spacing: .04em; }
+  .row2 { grid-template-columns: 1fr; }
+  .day-items { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sheet { animation: slide .18s ease-out; }
+  @keyframes slide { from { transform: translateX(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+.who { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.who b { color: var(--ink); font-weight: 600; }
+.banner { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.banner.info { border-color: var(--line); background: var(--surface); }
+.import-box { display: grid; gap: 8px; padding: 12px; border: 1px dashed var(--line); border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand-row">
+      <div class="brand">
+        <h1>Job Site Schedule</h1>
+        <p>Shared work calendar for the project coordinator, site lead and subs</p>
+      </div>
+      <div class="controls">
+        <span class="who" id="who" hidden></span>
+        <button class="btn" id="btn-lock" type="button" hidden>Unlock editing</button>
+        <button class="btn" id="btn-export" type="button">Export</button>
+        <button class="btn" id="btn-stats" type="button">Stats</button>
+        <button class="btn" id="btn-projects" type="button">Projects</button>
+        <button class="btn primary" id="btn-add" type="button">+ Add work</button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="nav">
+        <button class="btn icon" id="btn-prev" type="button" aria-label="Previous">‹</button>
+        <button class="btn" id="btn-today" type="button">Today</button>
+        <button class="btn icon" id="btn-next" type="button" aria-label="Next">›</button>
+        <span class="period" id="period"></span>
+      </div>
+      <span class="spacer"></span>
+      <select class="select" id="f-coord" aria-label="Filter by coordinator"></select>
+      <select class="select" id="f-project" aria-label="Filter by project"></select>
+      <select class="select" id="f-trade" aria-label="Filter by category"></select>
+      <select class="select" id="f-flag" aria-label="Filter by observed or media"></select>
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="v-month" aria-pressed="true">Month</button>
+        <button type="button" id="v-week" aria-pressed="false">Week</button>
+      </div>
+    </div>
+  </header>
+  <div id="banner" hidden class="banner"><span id="banner-msg"></span><button class="btn" id="banner-btn" type="button" hidden>Unlock editing</button></div>
+  <section class="stats" id="stats" aria-label="Needs attention"></section>
+  <details class="keybox" id="keybox">
+    <summary><span class="key-title">Key</span><span class="key-hint">Colors, dots and tags on the calendar</span></summary>
+    <div class="legend" id="legend"></div>
+  </details>
+  <main id="main"></main>
+</div>
+<div id="overlay" hidden><div class="scrim" id="scrim"></div><aside class="sheet" id="sheet" role="dialog" aria-modal="true"></aside></div>
+<div id="cmodal" hidden><div class="scrim" id="cscrim"></div><div class="cbox" id="cbox" role="dialog" aria-modal="true" aria-label="Schedule change"></div></div>
+<div class="draglbl" id="draglbl" hidden></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function () {
+  "use strict";
+  const TRADES = [
+    ["appliances", "Appliances", "APPL"],
+    ["exterior", "Building Exterior Work", "EXT"],
+    ["cabinets", "Cabinets / Counters", "CAB"],
+    ["demolition", "Demo / Debris Removal", "DEMO"],
+    ["drywall", "Drywall / Plaster Install / Repair", "DRY"],
+    ["electrical", "Electric", "ELEC"],
+    ["flooring", "Flooring", "FLR"],
+    ["framing", "Framing", "FRM"],
+    ["hvac", "HVAC", "HVAC"],
+    ["inspection", "Inspection", "INSP"],
+    ["insulation", "Insulation / Air Seal", "INS"],
+    ["masonry", "Interior Masonry / Waterproofing", "MAS"],
+    ["cleaning", "Interior Cleaning", "CLN"],
+    ["landscape", "Landscape, Hardscape & Fencing", "LAND"],
+    ["painting", "Painting", "PNT"],
+    ["plumbing", "Plumbing", "PLB"],
+    ["punchout", "Punchout", "PUNCH"],
+    ["roofing", "Roof", "ROOF"],
+    ["safety", "Securing / Safety", "SAFE"],
+    ["trim", "Trimout / Doors", "TRIM"],
+    ["windows", "Windows", "WIN"],
+    ["other", "Other", "OTH"]
+  ];
+  const INSP_TYPES = [["framing", "Framing"], ["elec_rough", "Electric rough-in"], ["hvac_rough", "HVAC rough-in"], ["plumb_rough", "Plumbing rough-in"], ["insulation", "Insulation"], ["elec_final", "Electric final"], ["hvac_final", "HVAC final"], ["plumb_final", "Plumbing final"], ["building_final", "Building final"]];
+  const INSP_TYPE = Object.fromEntries(INSP_TYPES);
+  const TRADE = Object.fromEntries(TRADES.map(([k, l, c]) => [k, { label: l, code: c }]));
+  const STATUSES = [["scheduled", "Scheduled"], ["progress", "In progress"], ["done", "Done"], ["delayed", "Delayed"]];
+  const STATUS = Object.fromEntries(STATUSES);
+  const INSPS = [["pending", "Pending"], ["pass", "Passed"], ["fail", "Failed"]];
+  const INSP = Object.fromEntries(INSPS);
+  const MATS = [["", "Not tracked"], ["needed", "Needed"], ["ordered", "Ordered"], ["delivered", "Delivered"]];
+  const MAT = Object.fromEntries(MATS);
+  const LANES = 3;
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const MON = MONTHS.map(m => m.slice(0, 3));
+  const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  // ---------- helpers ----------
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, "0");
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const startOfWeek = d => addDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), -d.getDay());
+  const dayDiff = (a, b) => Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 864e5);
+  const todayIso = () => iso(new Date());
+  const endOf = t => (t.end && t.end >= t.start) ? t.end : t.start;
+  const fmtShort = s => { const d = parse(s); return `${MON[d.getMonth()]} ${d.getDate()}`; };
+  const fmtDay = s => { const d = parse(s); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; };
+  const money = n => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+  const isLink = s => typeof s === "string" && /^https:\/\/\S+$/.test(s.trim());
+  const spanLabel = t => t.start === endOf(t) ? fmtDay(t.start) : `${fmtShort(t.start)} to ${fmtShort(endOf(t))}`;
+  const isInsp = t => t.trade === "inspection";
+  const INSP_ICON = {
+    pass: '<path d="M6.2 10.4l2.6 2.6 5-5.6" fill="none" stroke="var(--insp-pass)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    fail: '<path d="M7 7l6 6M13 7l-6 6" fill="none" stroke="var(--insp-fail)" stroke-width="2.4" stroke-linecap="round"/>',
+    pending: '<circle cx="5.9" cy="10" r="1.9" fill="var(--insp-pend)"/><circle cx="10" cy="10" r="1.9" fill="var(--insp-pend)"/><circle cx="14.1" cy="10" r="1.9" fill="var(--insp-pend)"/>'
+  };
+  const VISIT = {
+    tour: { label: "Tour", color: "var(--tour)", icon: '<circle cx="7.2" cy="7.3" r="2.3" fill="var(--vglyph)"/><circle cx="13" cy="7.3" r="2.3" fill="var(--vglyph)"/><path d="M3.1 15.4c0-2.6 1.8-4.3 4.1-4.3s4.1 1.7 4.1 4.3z" fill="var(--vglyph)"/><path d="M11.3 15.4c.3-2.5 1.6-4.3 3.6-4.3 2.2 0 3.9 1.7 3.9 4.3z" fill="var(--vglyph)"/>' },
+    req: { label: "Class", color: "var(--class)", icon: '<path d="M10 4.3l7.6 3.6L10 11.5 2.4 7.9z" fill="var(--vglyph)"/><path d="M5.9 9.9v3.3c0 1.2 1.9 2.3 4.1 2.3s4.1-1.1 4.1-2.3V9.9L10 11.9z" fill="var(--vglyph)"/><path d="M16.6 8.3v4.6" stroke="var(--vglyph)" stroke-width="1.2" stroke-linecap="round"/><circle cx="16.6" cy="13.3" r="1" fill="var(--vglyph)"/>' }
+  };
+  const visitDate = (t, k) => validDate(t[k + "Date"]) ? t[k + "Date"] : t.start;
+  function visitDot(k, t) {
+    const v = VISIT[k];
+    const interactive = !!t;
+    const title = t ? `${v.label}: ${t[k + "Who"] || "visit"}${t[k + "Time"] ? " at " + fmtTime(t[k + "Time"]) : ""} · ${t.title || "Untitled"}${t[k + "Notes"] ? "\n" + t[k + "Notes"] : ""}` : v.label;
+    const movable = !!(t && S.canWrite && S.db);
+    const el = h("span", Object.assign({ class: "idot vdot" + (movable ? " movable" : ""), title }, interactive ? { role: "button", tabindex: "0", "aria-label": title,
+      onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); },
+      onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openTaskForm(t); } },
+      onpointerdown: movable ? e => { e.stopPropagation(); const dt = visitDate(t, k); startDrag(e, { id: t.id, start: dt, end: "" }, "move", ns => moveVisit(t, k, ns)); } : null
+    } : { "aria-hidden": "true" }));
+    el.innerHTML = `<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.4" fill="${v.color}"/>${v.icon}</svg>`;
+    return el;
+  }
+  async function moveVisit(t, k, ns) {
+    if (ns === visitDate(t, k)) return;
+    await write(() => S.db.doc("tasks/" + t.id).update({ [k + "Date"]: ns, ...stamp() }), `${VISIT[k].label} moved to ${fmtShort(ns)}`);
+  }
+  function inspDot(res, title, onclick, task) {
+    const r = INSP_ICON[res] ? res : "pending";
+    const movable = !!(task && S.canWrite && S.db);
+    const el = h("span", Object.assign({ class: "idot" + (movable ? " movable" : ""), title }, onclick ? { role: "button", tabindex: "0", "aria-label": title,
+      onclick: e => { e.stopPropagation(); if (S.suppressClick) return; onclick(); },
+      onpointerdown: movable ? e => { e.stopPropagation(); startDrag(e, task, "move"); } : null, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onclick(); } } } : { "aria-hidden": "true" }));
+    el.innerHTML = '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="var(--insp-silver)" stroke="var(--insp-rim)" stroke-width="1.2"/>' + INSP_ICON[r] + '</svg>';
+    return el;
+  }
+  const isDone = t => t.status === "done" || (isInsp(t) && t.inspResult === "pass");
+  const satisfied = isDone;
+  const effSt = t => { if (isInsp(t)) { if (t.inspResult === "pass") return "done"; if (t.inspResult === "fail") return "delayed"; } return STATUS[t.status] ? t.status : "scheduled"; };
+  const depState = x => isInsp(x) ? "Inspection " + (INSP[x.inspResult] || "Pending").toLowerCase() : (STATUS[x.status] || "Scheduled");
+  const waitingOn = t => (Array.isArray(t.dependsOn) ? t.dependsOn : []).map(id => S.tasks.get(id)).filter(x => x && !satisfied(x));
+  const needsWO = t => !isInsp(t) && !t.workOrder && !isDone(t);
+  const LINE_ST = [["needed", "Needed"], ["ordered", "Ordered"], ["delivered", "Delivered"]];
+  const matList = t => Array.isArray(t.materialsList) ? t.materialsList.filter(m => m && m.name)
+    : (t.materials ? String(t.materials).split(/\n+/).map(x => x.trim()).filter(Boolean).map(name => ({ name, qty: "", status: t.matStatus || "needed", date: t.matDate || "" })) : []);
+  const linePending = m => m.status !== "delivered";
+  const matLate = t => !isDone(t) && matList(t).some(m => linePending(m) && (t.start <= iso(addDays(new Date(), 7)) || (m.date && m.date > t.start)));
+  // Each job can hold several architect questions; older jobs stored one in archText / archA.
+  const archList = t => !t.archQ ? [] : Array.isArray(t.archQs) ? t.archQs.filter(x => x && (x.q || "").trim())
+    : ((t.archText || "").trim() ? [{ q: t.archText, a: t.archA || "", answeredAt: t.archAnsweredAt || "" }] : []);
+  const archOpenCount = t => archList(t).filter(x => !(x.a || "").trim()).length;
+  const archOpen = t => archOpenCount(t) > 0;
+  const lineText = m => `${m.name}${m.qty ? " (" + m.qty + ")" : ""}`;
+  const lineStatus = m => (MAT[m.status] || "Needed") + (m.date && m.status !== "delivered" ? `, expected ${fmtShort(m.date)}` : "");
+  const fmtTime = v => { if (!v) return ""; const [hh, mm] = v.split(":").map(Number); const ap = hh >= 12 ? "PM" : "AM"; return `${((hh + 11) % 12) + 1}:${pad(mm)} ${ap}`; };
+  const logId = (pid, di) => `${pid}__${di}`;
+  const validDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "style") el.style.cssText = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+      else if (k === "value" || k === "checked" || k === "disabled" || k === "selected") el[k] = v;
+      else el.setAttribute(k, v === true ? "" : String(v));
+    }
+    for (const c of kids.flat()) {
+      if (c == null || c === false) continue;
+      el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return el;
+  }
+  function store(k, v) { try { localStorage.setItem("jss:" + k, v); } catch (e) {} }
+  function recall(k, d) { try { return localStorage.getItem("jss:" + k) ?? d; } catch (e) { return d; } }
+
+  let toastTimer;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200); }
+
+  // ---------- state ----------
+  const S = {
+    db: null, auth: null, uid: null, me: recall("name", ""), canWrite: false, unavailable: false, ready: false,
+    projects: new Map(), tasks: new Map(), logs: new Map(), downloads: null,
+    loadedP: false, loadedT: false, loadedL: false, slow: false,
+    view: recall("view", "month"),
+    project: recall("project", "all"),
+    coord: recall("coord", "all"),
+    trade: recall("trade", "all"),
+    flag: recall("flag", "all"),
+    cursor: new Date(),
+    sheetRefresh: null
+  };
+  if (!["month", "week"].includes(S.view)) S.view = "month";
+
+  const sortedProjects = () => [...S.projects.values()].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const projCoord = id => ((S.projects.get(id) || {}).coordinator || "").trim();
+  const coordinators = () => {
+    const m = new Map();
+    for (const p of S.projects.values()) { const c = (p.coordinator || "").trim(); if (c && !m.has(c.toLowerCase())) m.set(c.toLowerCase(), c); }
+    return [...m.values()].sort((a, b) => a.localeCompare(b));
+  };
+  const coordMatchProj = id => S.coord === "all" || (S.coord === "__none" ? !projCoord(id) : projCoord(id).toLowerCase() === S.coord.toLowerCase());
+  const coordMatch = t => S.coord === "all" || coordMatchProj(t.projectId) || (S.coord !== "__none" && (t.coordinator || "").trim().toLowerCase() === S.coord.toLowerCase());
+  const filtered = () => [...S.tasks.values()].filter(t =>
+    validDate(t.start) &&
+    coordMatch(t) &&
+    (S.project === "all" || t.projectId === S.project) &&
+    (S.trade === "all" || t.trade === S.trade) &&
+    flagMatch(t));
+  const FLAGS = [["all", "All work"], ["observed", "Observed: any"], ["tour", "Observed: Tour"], ["requity", "Observed: Class"], ["media", "Media requested"], ["arch", "Architect question: open"], ["archall", "Architect question: any"]];
+  function flagMatch(t) {
+    switch (S.flag) {
+      case "observed": return !!(t.obsTour || t.obsRequity);
+      case "tour": return !!t.obsTour;
+      case "requity": return !!t.obsRequity;
+      case "media": return !!t.media;
+      case "arch": return archOpen(t);
+      case "archall": return !!t.archQ;
+      default: return true;
+    }
+  }
+  function tagEls(t) {
+    const out = [];
+    if (t.media) out.push(h("span", { class: "tag media", title: "Media requested", text: "MEDIA" }));
+    if (archOpen(t)) out.push(h("span", { class: "tag arch", title: "Open architect question", text: "ARCH?" }));
+    if (!isDone(t) && waitingOn(t).length) out.push(h("span", { class: "tag warn", title: "Waiting on another item or inspection", text: "WAIT" }));
+    if (matLate(t)) out.push(h("span", { class: "tag warn", title: "Materials not delivered yet", text: "MAT" }));
+    return out;
+  }
+
+  function range() {
+    if (S.view === "week") { const s = startOfWeek(S.cursor); return [s, addDays(s, 6)]; }
+    const first = new Date(S.cursor.getFullYear(), S.cursor.getMonth(), 1);
+    const last = new Date(S.cursor.getFullYear(), S.cursor.getMonth() + 1, 0);
+    return [first, last];
+  }
+
+  // ---------- writes ----------
+  async function write(fn, okMsg) {
+    if (!S.db) { toast("The shared schedule is not available in this view."); return false; }
+    try { await fn(); if (okMsg) toast(okMsg); return true; }
+    catch (e) {
+      if (e && e.code === "permission-denied") { S.canWrite = false; renderAll(); toast("This device isn't unlocked for editing. Tap Unlock editing and enter the team passcode."); }
+      else if (e && e.code === "resource-exhausted") toast("The schedule hit its daily limit. Try again tomorrow or contact the schedule owner.");
+      else if (e && e.code === "unavailable") toast("Couldn't reach the schedule. Check your connection and try again.");
+      else toast("That change didn't save. Try again.");
+      return false;
+    }
+  }
+  const stamp = () => ({ updatedBy: S.me || "Someone", updatedAt: new Date().toISOString() });
+
+  // ---------- header / filters ----------
+  function renderFilters() {
+    const fc = $("f-coord"); fc.replaceChildren(h("option", { value: "all", text: "All coordinators" }));
+    const cs = coordinators();
+    for (const c of cs) fc.append(h("option", { value: c, text: c }));
+    if ([...S.projects.values()].some(p => !(p.coordinator || "").trim())) fc.append(h("option", { value: "__none", text: "No coordinator set" }));
+    if (S.coord !== "all" && S.coord !== "__none" && !cs.some(c => c.toLowerCase() === S.coord.toLowerCase()) && S.loadedP) S.coord = "all";
+    fc.value = cs.find(c => c.toLowerCase() === S.coord.toLowerCase()) || S.coord;
+    const fp = $("f-project"); fp.replaceChildren(h("option", { value: "all", text: S.coord === "all" ? "All projects" : "All their projects" }));
+    for (const p of sortedProjects().filter(p => coordMatchProj(p.id))) fp.append(h("option", { value: p.id, text: p.name || "Untitled project" }));
+    if (S.project !== "all" && (!S.projects.has(S.project) || !coordMatchProj(S.project)) && S.loadedP) S.project = "all";
+    fp.value = S.project;
+    const ft = $("f-trade"); ft.replaceChildren(h("option", { value: "all", text: "All categories" }));
+    for (const [k, l] of TRADES) ft.append(h("option", { value: k, text: l }));
+    ft.value = S.trade;
+    const ff = $("f-flag"); ff.replaceChildren(...FLAGS.map(([v, l]) => h("option", { value: v, text: l })));
+    if (!FLAGS.some(f => f[0] === S.flag)) S.flag = "all";
+    ff.value = S.flag;
+    $("v-month").setAttribute("aria-pressed", S.view === "month");
+    $("v-week").setAttribute("aria-pressed", S.view === "week");
+    const [a, b] = range();
+    $("period").textContent = S.view === "month"
+      ? `${MONTHS[a.getMonth()]} ${a.getFullYear()}`
+      : (a.getMonth() === b.getMonth() ? `${MON[a.getMonth()]} ${a.getDate()} to ${b.getDate()}, ${b.getFullYear()}` : `${MON[a.getMonth()]} ${a.getDate()} to ${MON[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`);
+    $("btn-add").hidden = !S.canWrite;
+  }
+
+  function renderBanner() {
+    const b = $("banner");
+    let msg = "", btn = false;
+    if (S.unavailable) msg = S.unavailableMsg || "The shared schedule couldn't load. Check your connection and reload the page.";
+    else if (S.slow && !(S.loadedP && S.loadedT)) msg = "Still trying to reach the shared schedule. What you see may be incomplete or out of date.";
+    else if (S.offline) msg = "Can't reach the schedule right now. You're seeing the copy saved on this device; it will update when the connection is back.";
+    else if (S.ready && !S.canWrite) { msg = "You're viewing the schedule. Open any job to add materials, tour or class details, architect questions or media. To change anything else, unlock editing with the team passcode."; btn = true; }
+    $("banner-msg").textContent = msg; $("banner-btn").hidden = !btn; b.hidden = !msg;
+    b.classList.toggle("info", btn);
+    const who = $("who");
+    who.hidden = !(S.canWrite && S.me);
+    who.replaceChildren("Editing as ", h("b", { text: S.me || "" }));
+    $("btn-lock").textContent = S.canWrite ? "Lock" : "Unlock editing";
+    $("btn-lock").hidden = !S.ready;
+  }
+
+  function renderStats() {
+    const today = todayIso();
+    const soon = iso(addDays(new Date(), 14));
+    const list = filtered();
+    const overdue = list.filter(t => !isDone(t) && endOf(t) < today);
+    const noWO = list.filter(t => needsWO(t) && t.start <= soon && endOf(t) >= today);
+    const active = list.filter(t => !isDone(t) && t.start <= today && endOf(t) >= today);
+    const blocked = list.filter(t => !isDone(t) && t.start <= soon && waitingOn(t).length);
+    const mats = list.filter(t => matLate(t));
+    const archs = list.filter(t => archOpen(t));
+    const archQCount = archs.reduce((n, t) => n + archOpenCount(t), 0);
+    const [a, b] = range(); const A = iso(a), B = iso(b);
+    const inView = list.filter(t => t.start <= B && endOf(t) >= A);
+    const budget = inView.reduce((s, t) => s + (Number(t.budget) || 0), 0);
+    const stat = (k, v, s, cls, items, title) => h(items ? "button" : "div", {
+      class: "stat" + (cls ? " " + cls : "") + (items ? " clickable" : ""), type: items ? "button" : null,
+      onclick: items ? () => openList(title, items) : null
+    }, h("span", { class: "k", text: k }), h("span", { class: "v", text: v }), h("span", { class: "s", text: s }));
+    $("stats").replaceChildren(
+      stat("Past deadline", String(overdue.length), overdue.length ? "Not marked done" : "Nothing late", overdue.length ? "alert" : "", overdue.length ? overdue : null, "Past deadline"),
+      stat("Need a work order", String(noWO.length), "Starting within 14 days", noWO.length ? "warnish" : "", noWO.length ? noWO : null, "Needs a work order"),
+      stat("Waiting on others", String(blocked.length), "Earlier work or inspection not done", blocked.length ? "warnish" : "", blocked.length ? blocked : null, "Waiting on other work"),
+      stat("Materials not on site", String(mats.length), "Needed or ordered, work starts soon", mats.length ? "warnish" : "", mats.length ? mats : null, "Materials not delivered"),
+      stat("Architect questions", String(archQCount), archQCount ? `Waiting on an answer · ${plural(archs.length, "job")}` : "None open", archs.length ? "alert" : "", archs.length ? archs : null, "Open architect questions"),
+      stat("On site today", String(active.length), fmtDay(today), "", active.length ? active : null, "On site today"),
+      stat(S.view === "month" ? "Budgeted this month" : "Budgeted this week", money(budget), `${inView.length} work item${inView.length === 1 ? "" : "s"} in view`, "", inView.length ? inView : null, S.view === "month" ? "This month" : "This week")
+    );
+    $("legend").replaceChildren(...TRADES.filter(([k]) => k !== "inspection").map(([k, l, c]) => h("span", { class: "t-" + k }, h("i"), `${c} ${l}`)),
+      h("span", null, inspDot("pending"), "Inspection pending"), h("span", null, inspDot("pass"), "Passed"), h("span", null, inspDot("fail"), "Failed"),
+      h("span", null, "Dashed edge: continues"), h("span", null, "Striped: delayed"),
+      h("span", null, visitDot("tour"), "Tour"), h("span", null, visitDot("req"), "Class"), h("span", null, h("b", { class: "tag media", text: "MEDIA" }), " Media requested"), h("span", null, h("b", { class: "tag warn", text: "WAIT" }), " Waiting on other work"), h("span", null, h("b", { class: "tag warn", text: "MAT" }), " Materials not delivered"), h("span", null, h("b", { class: "tag arch", text: "ARCH?" }), " Open architect question"), h("span", null, h("b", { class: "logmark", style: "margin:0", text: "LOG" }), " Daily log written"));
+  }
+
+  // ---------- month ----------
+  function renderMonth() {
+    const y = S.cursor.getFullYear(), m = S.cursor.getMonth();
+    const first = new Date(y, m, 1), gridStart = startOfWeek(first);
+    const daysIn = new Date(y, m + 1, 0).getDate();
+    const weeks = Math.ceil((first.getDay() + daysIn) / 7);
+    const today = todayIso();
+    const tasks = filtered();
+    const wrap = h("div", { class: "month" }, h("div", { class: "dow" }, DOW.map(d => h("div", { text: d }))));
+    for (let w = 0; w < weeks; w++) {
+      const ws = addDays(gridStart, w * 7), we = addDays(ws, 6);
+      const wsI = iso(ws), weI = iso(we);
+      const row = h("div", { class: "week" });
+      for (let d = 0; d < 7; d++) {
+        const day = addDays(ws, d), di = iso(day);
+        row.append(h("button", {
+          type: "button",
+          class: "cell" + (day.getMonth() !== m ? " out" : "") + (di === today ? " today" : "") + (di < today ? " past" : ""),
+          style: `grid-column:${d + 1}`, "aria-label": `${fmtDay(di)}, open day`, "data-date": di,
+          onclick: () => { if (S.suppressClick) return; openDay(di); }
+        }, h("span", { class: "num", text: day.getDate() }),
+          (() => { const ins = tasks.filter(t => isInsp(t) && t.start === di);
+            const tours = tasks.filter(t => !isInsp(t) && t.obsTour && visitDate(t, "tour") === di);
+            const classes = tasks.filter(t => !isInsp(t) && t.obsRequity && visitDate(t, "req") === di);
+            const total = ins.length + tours.length + classes.length;
+            if (!total) return null;
+            const rank = t => t.inspResult === "fail" ? 0 : t.inspResult === "pass" ? 2 : 1;
+            ins.sort((a, b) => rank(a) - rank(b));
+            return h("span", { class: "idots" },
+              ins.map(t => inspDot(t.inspResult, `${t.title || "Inspection"}: ${INSP[t.inspResult] || "Pending"}${(S.projects.get(t.projectId) || {}).name ? " · " + S.projects.get(t.projectId).name : ""}`, () => openTaskForm(t), t)),
+              tours.map(t => visitDot("tour", t)), classes.map(t => visitDot("req", t)),
+              total > 1 ? h("span", { class: "imore", title: `${total} inspections and visits`, text: `+${total - 1}` }) : null); })(),
+          logsOn(di).length ? h("span", { class: "logmark", title: "Daily log written", text: "LOG" }) : null));
+      }
+      const items = tasks.filter(t => !isInsp(t) && t.start <= weI && endOf(t) >= wsI)
+        .sort((a, b) => a.start.localeCompare(b.start) || endOf(b).localeCompare(endOf(a)) || (a.title || "").localeCompare(b.title || ""));
+      const laneEnd = [];
+      for (const t of items) {
+        const cs = Math.max(0, dayDiff(ws, parse(t.start)));
+        const ce = Math.min(6, dayDiff(ws, parse(endOf(t))));
+        let lane = laneEnd.findIndex(e => e < cs);
+        if (lane === -1) { lane = laneEnd.length; laneEnd.push(ce); } else laneEnd[lane] = ce;
+        const tr = TRADE[t.trade] || TRADE.other;
+        row.append(h("button", {
+          type: "button",
+          class: `bar t-${TRADE[t.trade] ? t.trade : "other"} st-${effSt(t)}` + (S.canWrite && S.db ? " movable" : "") + (t.start < wsI ? " cl" : "") + (endOf(t) > weI ? " cr" : ""),
+          style: `grid-row:${lane + 2};grid-column:${cs + 1} / ${ce + 2}`,
+          title: `${tr.label}: ${t.title || "Untitled"} (${spanLabel(t)})` + (isInsp(t) ? ` · ${INSP[t.inspResult] || "Pending"}` : ""),
+          onclick: e => { e.stopPropagation(); if (S.suppressClick) return; openTaskForm(t); },
+          onpointerdown: (S.canWrite && S.db) ? e => { if (!e.target.closest(".hdl")) startDrag(e, t, "move"); } : null,
+          oncontextmenu: (S.canWrite && S.db) ? e => { if (e.pointerType !== "mouse") e.preventDefault(); } : null
+        },
+          (S.canWrite && S.db && t.start >= wsI) ? h("span", { class: "hdl l", title: "Drag to change the start date", onpointerdown: e => startDrag(e, t, "start"), onclick: e => e.stopPropagation() }) : null,
+          (S.canWrite && S.db && endOf(t) <= weI) ? h("span", { class: "hdl r", title: "Drag to change the end date", onpointerdown: e => startDrag(e, t, "end"), onclick: e => e.stopPropagation() }) : null,
+          t.status === "progress" ? h("span", { class: "live" }) : null,
+          h("span", { class: "code", text: tr.code }),
+          h("span", { class: "ttl", text: t.title || "Untitled" }),
+          tagEls(t).length ? h("span", { class: "tags" }, tagEls(t)) : null,
+          needsWO(t) ? h("span", { class: "nowo", title: "No work order yet", text: "WO?" }) : null
+        ));
+      }
+      row.style.setProperty("--lanes", Math.max(LANES, laneEnd.length));
+      wrap.append(row);
+    }
+    return wrap;
+  }
+
+  // ---------- week ----------
+  function card(t) {
+    const tr = TRADE[t.trade] || TRADE.other;
+    const p = S.projects.get(t.projectId);
+    const st = effSt(t);
+    const overdue = !isDone(t) && endOf(t) < todayIso();
+    const waits = isDone(t) ? [] : waitingOn(t);
+    const visit = (lbl, time, who, n, dt, notes) => h("div", { class: "card-sub" }, h("b", { text: lbl + ": " }),
+      [dt ? fmtShort(dt) : "", fmtTime(time), who, n ? `${n} ${Number(n) === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || "Details not set",
+      notes ? [h("br"), h("i", { text: notes })] : null);
+    const who = isInsp(t) ? (INSP_TYPE[t.inspType] || "Inspection") : (t.crew === "sub" ? "Sub" : "In-house");
+    const ws = workersOf(t);
+    const teamLine = (() => {
+      const bits = [];
+      if (subsOf(t).length) bits.push([ subsOf(t).length > 1 ? "Subs " : "Sub ", subsOf(t).join(", ") ]);
+      if (jobLead(t)) bits.push([ "Lead ", jobLead(t) ]);
+      if (t.squadLeader) bits.push([ "Squad ", t.squadLeader ]);
+      if (ws.length) bits.push([ "Workers ", ws.join(", ") ]);
+      if (!bits.length) return null;
+      return h("div", { class: "team" }, bits.flatMap(([k, v], i) => [i ? " · " : "", k, h("b", { text: v })]));
+    })();
+    const wo = h("label", { class: "wo " + (t.workOrder ? "has" : "missing"), onclick: e => e.stopPropagation() },
+      h("input", {
+        type: "checkbox", checked: !!t.workOrder, disabled: !S.canWrite || !S.db, "aria-label": "Work order created",
+        onchange: async e => {
+          const v = e.target.checked;
+          const ok = await write(() => S.db.doc("tasks/" + t.id).update({ workOrder: v, ...stamp() }), v ? "Marked work order created" : "Work order unchecked");
+          if (!ok) e.target.checked = !v;
+        }
+      }), t.workOrder ? "Work order created" : "No work order yet");
+    return h("div", {
+      class: `card t-${TRADE[t.trade] ? t.trade : "other"} st-${st}`, role: "button", tabindex: "0",
+      onclick: () => openTaskForm(t), onkeydown: e => { if (e.key === "Enter") openTaskForm(t); }
+    },
+      h("div", { class: "card-top" },
+        h("span", { class: "chip trade" }, h("span", { class: "code", text: tr.code }), tr.label),
+        h("span", { class: "chip" + (t.crew === "sub" ? " sub" : ""), text: who }),
+        t.obsTour ? h("span", { class: "chip obs", text: "Tour" }) : null,
+        t.obsRequity ? h("span", { class: "chip obs", text: "Class" }) : null,
+        t.media ? h("span", { class: "chip media", text: "Media requested" }) : null,
+        archList(t).length ? h("span", { class: "chip arch" + (archOpen(t) ? "" : " ok"), text: archOpen(t) ? `${archOpenCount(t)} architect question${archOpenCount(t) === 1 ? "" : "s"} open` : "Architect answered" }) : null,
+        h("span", { class: "pill " + st, text: isInsp(t) ? "Inspection " + (INSP[t.inspResult] || "Pending").toLowerCase() : STATUS[st] })),
+      h("div", { class: "card-title", text: t.title || "Untitled work" }),
+      teamLine,
+      ((t.noteLog || []).length || (t.attachments || []).length) ? h("div", { class: "card-meta" },
+        [(t.noteLog || []).length ? plural(t.noteLog.length, "team note") : "", (t.attachments || []).length ? plural(t.attachments.length, "file") : ""].filter(Boolean).join(" · ")) : null,
+      h("div", { class: "card-meta" }, (p && p.name) || "No project", " · ", spanLabel(t), overdue ? h("span", { class: "late", text: " · Past deadline" }) : null),
+      waits.length ? h("div", { class: "waitline" }, "Waiting on: " + waits.map(x => `${(TRADE[x.trade] || TRADE.other).code} ${x.title || "Untitled"} (${depState(x)})`).join("; ")) : null,
+      (() => {
+        const ml = matList(t); if (!ml.length) return null;
+        const got = ml.filter(m => m.status === "delivered").length;
+        const shown = ml.slice(0, 5);
+        return h("div", { class: "card-sub-wrap" },
+          h("div", { class: "card-meta" }, h("b", { style: "color:var(--ink)", text: "Materials: " }), `${got} of ${ml.length} delivered`),
+          h("ul", { class: "matlist" }, shown.map(m => h("li", null, h("span", { class: "nm", text: lineText(m) }), h("span", { class: "ms " + (m.status || "needed"), text: lineStatus(m) }))),
+            ml.length > shown.length ? h("li", { text: `+${ml.length - shown.length} more` }) : null));
+      })(),
+      t.notes ? h("div", { class: "card-sub" }, h("b", { text: "Notes: " }), t.notes) : null,
+      ...archList(t).map((x, i, all) => h("div", { class: "card-sub" }, h("b", { text: all.length > 1 ? `Architect Q${i + 1}: ` : "Architect Q: " }), x.q,
+        (x.a || "").trim() ? [h("br"), h("b", { text: "Answer: " }), x.a] : null)),
+      t.obsTour ? visit("Tour", t.tourTime, t.tourWho, t.tourCount, visitDate(t, "tour"), t.tourNotes) : null,
+      t.obsRequity ? visit("Class", t.reqTime, t.reqWho, t.reqCount, visitDate(t, "req"), t.reqNotes) : null,
+      t.media ? h("div", { class: "card-sub" }, h("b", { text: "Media: " }), t.mediaWhat || "Capture requested",
+        isLink(t.mediaLink) ? [" · ", h("a", { href: t.mediaLink, target: "_blank", rel: "noopener noreferrer", onclick: e => e.stopPropagation(), text: "Open media" })] : " · No link yet") : null,
+      h("div", { class: "card-foot" },
+        (() => {
+          const b = numOrNull(t.budget), a = numOrNull(t.actualCost);
+          if (b == null && a == null) return h("span", { class: "money none", text: "No budget set" });
+          return h("span", null, b != null ? h("span", { class: "money", text: money(b) }) : h("span", { class: "money none", text: "No budget" }),
+            a != null ? [h("span", { class: "money none", text: " · actual " }), h("span", { class: "money" + (b != null ? (a > b ? " over" : " under") : ""), text: money(a) })] : null);
+        })(),
+        isInsp(t) ? h("span", { class: "hint", text: "Inspection" }) : wo)
+    );
+  }
+  const tasksOn = (di, list) => list.filter(t => t.start <= di && endOf(t) >= di)
+    .sort((a, b) => isDone(a) - isDone(b) || a.start.localeCompare(b.start) || (a.title || "").localeCompare(b.title || ""));
+
+  function renderWeek() {
+    const ws = startOfWeek(S.cursor), today = todayIso(), list = filtered();
+    const wrap = h("div", { class: "weeklist" });
+    for (let d = 0; d < 7; d++) {
+      const di = iso(addDays(ws, d));
+      const items = tasksOn(di, list);
+      wrap.append(h("section", { class: "day" + (di === today ? " today" : "") + (di < today ? " past" : "") },
+        h("div", { class: "day-h" },
+          h("h3", null, fmtDay(di), di === today ? h("small", { text: "Today" }) : null, items.length ? h("small", { text: `${items.length} item${items.length === 1 ? "" : "s"}` }) : null),
+          h("div", { class: "acts" },
+            (S.db && (S.canWrite || logsOn(di).length)) ? h("button", { class: "btn", type: "button", onclick: () => openDayLog(di) }, logsOn(di).length ? "View log" : "Daily log") : null,
+            S.canWrite && S.db ? h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di, trade: "inspection" }) }, "+ Inspection") : null,
+            S.canWrite && S.db ? h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di }) }, "+ Add work") : null)),
+        h("div", { class: "day-items" }, items.length ? items.map(card) : h("div", { class: "empty-day", text: "Nothing scheduled" }))
+      ));
+    }
+    return wrap;
+  }
+
+  function renderMain() {
+    const main = $("main");
+    if (!S.unavailable && !(S.loadedP && S.loadedT) && !S.slow) {
+      main.replaceChildren(h("div", { class: "state" }, h("h2", { text: "Loading the schedule" }), h("p", { text: "Pulling the latest work items for every project." })));
+      return;
+    }
+    if (S.tasks.size === 0 && S.projects.size === 0 && !S.unavailable) {
+      main.replaceChildren(
+        h("div", { class: "state" },
+          h("h2", { text: "No work scheduled yet" }),
+          h("p", { text: "Start with a project (a job site address), then add the first piece of work: what needs doing, which trade, in-house or sub, the budget, materials, deadline and whether a work order exists. Everyone you share this page with sees the same calendar." }),
+          S.canWrite && S.db ? h("button", { class: "btn primary", type: "button", onclick: () => openTaskForm(null, {}) }, "+ Add the first work item") : null),
+        S.view === "month" ? renderMonth() : renderWeek());
+      main.firstChild.style.marginBottom = "14px";
+      return;
+    }
+    main.replaceChildren(S.view === "month" ? renderMonth() : renderWeek());
+  }
+
+  function renderAll() {
+    renderFilters(); renderBanner(); renderStats(); renderMain();
+    if (S.sheetRefresh) S.sheetRefresh();
+  }
+
+  // ---------- sheet ----------
+  const MIN_SHEET = 380;
+  const savedSheetW = () => { const v = Number(recall("sheetW", "")); return isFinite(v) && v >= MIN_SHEET ? v : 0; };
+  function applySheetW() {
+    const sh = $("sheet"), w = savedSheetW();
+    sh.style.width = w ? `min(${Math.min(w, window.innerWidth - 24)}px, 100%)` : "";
+    const b = sh.querySelector(".btn-expand");
+    if (b) { const big = w && w >= window.innerWidth * 0.8; b.textContent = big ? "⇥" : "⇤"; b.title = big ? "Shrink panel" : "Expand panel"; b.setAttribute("aria-label", b.title); }
+  }
+  function toggleSheetW() {
+    const w = savedSheetW();
+    if (w && w >= window.innerWidth * 0.8) store("sheetW", ""); else store("sheetW", String(Math.round(window.innerWidth * 0.92)));
+    applySheetW();
+  }
+  function startSheetResize(e) {
+    e.preventDefault();
+    const sh = $("sheet"); sh.classList.add("resizing");
+    const move = ev => {
+      const w = Math.max(MIN_SHEET, Math.min(window.innerWidth - 24, window.innerWidth - ev.clientX));
+      sh.style.width = w + "px";
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
+      sh.classList.remove("resizing");
+      const w = Math.round(sh.getBoundingClientRect().width);
+      store("sheetW", String(w)); applySheetW();
+    };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+  }
+  function openSheet(title, body, foot, refresh, wide) {
+    const sh = $("sheet");
+    sh.classList.toggle("wide", !!wide);
+    sh.setAttribute("aria-label", title);
+    sh.replaceChildren(
+      h("div", { class: "sheet-grip", title: "Drag to resize", "aria-hidden": "true", onpointerdown: startSheetResize, ondblclick: toggleSheetW }),
+      h("div", { class: "sheet-h" }, h("h2", { text: title }), h("div", { class: "acts" },
+        h("button", { class: "btn icon btn-expand", type: "button", onclick: toggleSheetW }),
+        h("button", { class: "btn icon", type: "button", "aria-label": "Close", onclick: closeSheet, text: "×" }))),
+      ...[body, foot].filter(Boolean));
+    applySheetW();
+    $("overlay").hidden = false;
+    S.sheetRefresh = refresh || null;
+    const f = sh.querySelector("input:not([type=checkbox]):not([type=radio]), textarea, select");
+    if (f && !refresh) setTimeout(() => f.focus(), 30);
+  }
+  function closeSheet() { $("overlay").hidden = true; $("sheet").replaceChildren(); S.sheetRefresh = null; }
+
+  function openDay(di) {
+    const draw = () => {
+      const items = tasksOn(di, filtered());
+      const body = h("div", { class: "sheet-b" },
+        h("div", { class: "hint", text: items.length ? `${items.length} work item${items.length === 1 ? "" : "s"} active this day` : "Nothing scheduled this day." }),
+        h("div", { class: "list" }, items.map(card)),
+        logSection(di, items));
+      const foot = S.canWrite && S.db ? h("div", { class: "sheet-f" },
+        h("button", { class: "btn", type: "button", onclick: () => openTaskForm(null, { start: di, trade: "inspection" }) }, "+ Add inspection"),
+        h("button", { class: "btn primary", type: "button", onclick: () => openTaskForm(null, { start: di }) }, `+ Add work on ${fmtShort(di)}`)) : null;
+      openSheet(fmtDay(di), body, foot, draw);
+    };
+    draw();
+  }
+
+  function openList(title, items) {
+    const ids = items.map(t => t.id);
+    const draw = () => {
+      const now = ids.map(id => S.tasks.get(id)).filter(Boolean).sort((a, b) => a.start.localeCompare(b.start));
+      openSheet(title, h("div", { class: "sheet-b" }, now.length ? h("div", { class: "list" }, now.map(card)) : h("div", { class: "hint", text: "Nothing here now." })), null, draw);
+    };
+    draw();
+  }
+
+  const personName = v => (typeof v === "string" && v && !/^u_[A-Za-z0-9_-]{10,}$/.test(v)) ? v : "someone";
+
+  // ---------- Cloudflare data connection ----------
+  // A small stand-in for the parts of Firebase this page used: documents in three collections,
+  // live-ish updates (checks every few seconds), batched writes, and a copy saved on this device.
+  const COLS = ["projects", "tasks", "logs"];
+  function apiCall(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({}, opts.headers || {});
+    const tk = recall("token", "");
+    if (tk) headers.authorization = "Bearer " + tk;
+    return fetch("/api/" + path, Object.assign({}, opts, { headers })).then(async res => {
+      let body = null;
+      try { body = await res.json(); } catch (e) {}
+      if (!res.ok) {
+        const er = new Error(body && body.error ? body.error.message : "Request failed");
+        er.code = body && body.error ? body.error.code : "unavailable"; er.status = res.status;
+        throw er;
+      }
+      return body;
+    }, () => { const er = new Error("offline"); er.code = "unavailable"; throw er; });
+  }
+  function makeStore() {
+    const data = { projects: new Map(), tasks: new Map(), logs: new Map() };
+    const listeners = { projects: [], tasks: [], logs: [] };
+    let since = 0, syncing = null, synced = false;
+    const clone = v => JSON.parse(JSON.stringify(v));
+    const emit = (col, fromCache) => {
+      const snap = { docs: [...data[col].entries()].map(([id, v]) => ({ id, data: () => v })), metadata: { fromCache } };
+      listeners[col].forEach(l => { try { l.fn(snap); } catch (e) { console.error(e); } });
+    };
+    const saveCache = () => {
+      try { localStorage.setItem("jss:cache", JSON.stringify({ since, projects: [...data.projects], tasks: [...data.tasks], logs: [...data.logs] })); }
+      catch (e) { try { localStorage.removeItem("jss:cache"); } catch (e2) {} }
+    };
+    function loadCache() {
+      try {
+        const c = JSON.parse(localStorage.getItem("jss:cache") || "null");
+        if (!c || !c.since) return false;
+        for (const k of COLS) data[k] = new Map(c[k] || []);
+        since = c.since;
+        return true;
+      } catch (e) { return false; }
+    }
+    async function sync() {
+      if (syncing) return syncing;
+      syncing = (async () => {
+        // Ask a little further back than the last check so writes that landed at the same moment aren't missed.
+        const r = await apiCall("sync?since=" + Math.max(0, since - 5000));
+        const touched = new Set(synced ? [] : COLS);
+        for (const d of r.docs) {
+          const m = data[d.col]; if (!m) continue;
+          if (d.deleted) { if (m.delete(d.id)) touched.add(d.col); }
+          else if (JSON.stringify(m.get(d.id)) !== JSON.stringify(d.data)) { m.set(d.id, d.data); touched.add(d.col); }
+        }
+        since = r.now; synced = true;
+        touched.forEach(c => emit(c, false));
+        saveCache();
+        return touched;
+      })();
+      try { return await syncing; } finally { syncing = null; }
+    }
+    async function commit(ops) {
+      for (let i = 0; i < ops.length; i += 450) {
+        const chunk = ops.slice(i, i + 450);
+        await apiCall("write", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ops: chunk }) });
+        for (const o of chunk) {
+          const m = data[o.col];
+          if (o.op === "delete") m.delete(o.id);
+          else if (o.op === "set") m.set(o.id, clone(o.data));
+          else m.set(o.id, Object.assign({}, m.get(o.id) || {}, clone(o.data)));
+        }
+      }
+      [...new Set(ops.map(o => o.col))].forEach(c => emit(c, false));
+      saveCache();
+      setTimeout(() => sync().catch(() => {}), 400);
+    }
+    const newId = () => { const a = "abcdefghijklmnopqrstuvwxyz0123456789"; let s = ""; const r = crypto.getRandomValues(new Uint8Array(20)); for (const x of r) s += a[x % a.length]; return s; };
+    const docRef = (col, id) => ({
+      id, _col: col,
+      get: async () => ({ exists: data[col].has(id), data: () => data[col].get(id) }),
+      set: d => commit([{ op: "set", col, id, data: d }]),
+      update: d => commit([{ op: "update", col, id, data: d }]),
+      delete: () => commit([{ op: "delete", col, id }])
+    });
+    return {
+      loadCache, sync, emitAll: fc => COLS.forEach(c => emit(c, fc)),
+      doc: path => { const [c, i] = path.split("/"); return docRef(c, i); },
+      collection: c => ({
+        doc: id => docRef(c, id || newId()),
+        onSnapshot: (fn, err) => { const l = { fn, err }; listeners[c].push(l); return () => { listeners[c] = listeners[c].filter(x => x !== l); }; }
+      }),
+      batch: () => {
+        const ops = [];
+        return {
+          set: (ref, d) => ops.push({ op: "set", col: ref._col, id: ref.id, data: d }),
+          update: (ref, d) => ops.push({ op: "update", col: ref._col, id: ref.id, data: d }),
+          delete: ref => ops.push({ op: "delete", col: ref._col, id: ref.id }),
+          commit: () => ops.length ? commit(ops) : Promise.resolve()
+        };
+      }
+    };
+  }
+
+  // ---------- team notes and attachments (anyone can add; only unlocked devices can delete) ----------
+  const fmtWhen = iso => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
+  const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  const MAX_UPLOAD = 25 * 1024 * 1024;
+  function teamSection(t) {
+    const wrap = h("div", { class: "team-box" });
+    const err = h("div", { class: "err", role: "alert" });
+    const nameIn = h("input", { type: "text", id: "tn-name", placeholder: "So the team knows who added this", autocomplete: "name" });
+    const nameField = field("Your name", nameIn, "tn-name");
+    const needName = () => {
+      if (S.me) return true;
+      const n = nameIn.value.trim();
+      if (!n) { err.textContent = "Enter your name first."; nameIn.focus(); return false; }
+      S.me = n; store("name", n); nameField.hidden = true; return true;
+    };
+    const cur = () => S.tasks.get(t.id) || t;
+    const notesList = h("div", { class: "nlog" });
+    const filesList = h("div", { class: "flist" });
+    const drawNotes = () => {
+      const log = Array.isArray(cur().noteLog) ? cur().noteLog : [];
+      notesList.replaceChildren(...(log.length ? log.map((n, i) => h("div", { class: "nitem" },
+        h("div", { class: "ntext", text: n.text }),
+        h("div", { class: "nmeta" }, [personName(n.by), fmtWhen(n.at)].filter(Boolean).join(" · "),
+          S.canWrite ? h("button", { type: "button", class: "linkbtn danger", onclick: async () => {
+            const l = (cur().noteLog || []).filter((x, j) => !(j === i && x.at === n.at));
+            if (await write(() => S.db.doc("tasks/" + t.id).update({ noteLog: l, ...stamp() }), "Note removed")) drawNotes();
+          } }, "Remove") : null)))
+        : [h("div", { class: "hint", text: "No team notes yet." })]));
+    };
+    const drawFiles = () => {
+      const files = Array.isArray(cur().attachments) ? cur().attachments : [];
+      filesList.replaceChildren(...(files.length ? files.map(f => {
+        const url = "/api/files/" + f.key;
+        const isImg = /^image\//.test(f.type || "");
+        const row = h("div", { class: "fitem" },
+          isImg ? h("a", { href: url, target: "_blank", rel: "noopener", class: "fthumb" }, h("img", { src: url, alt: "", loading: "lazy" }))
+                : h("a", { href: url, target: "_blank", rel: "noopener", class: "fthumb ficon", text: ((f.name || "").split(".").pop() || "file").slice(0, 4).toUpperCase() }),
+          h("div", { class: "fmain" },
+            h("a", { href: url, target: "_blank", rel: "noopener", class: "fname", text: f.name || "File" }),
+            h("div", { class: "nmeta", text: [fmtSize(f.size || 0), personName(f.by), fmtWhen(f.at)].filter(Boolean).join(" · ") })));
+        if (S.canWrite) {
+          const acts = h("div", { class: "rec-acts" });
+          const normal = () => acts.replaceChildren(h("button", { type: "button", class: "linkbtn danger", onclick: confirm }, "Delete"));
+          const confirm = () => acts.replaceChildren(h("span", { class: "hint", text: "Delete this file?" }),
+            h("button", { type: "button", class: "btn danger solid", onclick: async () => {
+              try { await apiCall("files/" + f.key, { method: "DELETE" }); } catch (e) { if (e.status !== 404) { toast(e.message || "Couldn't delete the file."); return; } }
+              const l = (cur().attachments || []).filter(x => x.key !== f.key);
+              if (await write(() => S.db.doc("tasks/" + t.id).update({ attachments: l, ...stamp() }), "File deleted")) drawFiles();
+            } }, "Yes, delete"),
+            h("button", { type: "button", class: "btn", onclick: normal }, "Keep"));
+          normal(); row.append(acts);
+        }
+        return row;
+      }) : [h("div", { class: "hint", text: "No files yet." })]));
+    };
+    const noteIn = h("textarea", { id: "tn-text", rows: "2", placeholder: "Add a note for the team (anyone can add; earlier notes stay as written)" });
+    const addNote = h("button", { type: "button", class: "btn" }, "Add note");
+    addNote.addEventListener("click", async () => {
+      err.textContent = "";
+      const text = noteIn.value.trim();
+      if (!text) { err.textContent = "Type a note first."; noteIn.focus(); return; }
+      if (!needName()) return;
+      addNote.disabled = true;
+      try {
+        await S.db.doc("tasks/" + t.id).update({ noteLog: [...(cur().noteLog || []), { text, by: S.me, at: new Date().toISOString() }], ...stamp() });
+        noteIn.value = ""; drawNotes(); toast("Note added");
+      } catch (e) { err.textContent = e.message || "Couldn't add the note. Try again."; }
+      addNote.disabled = false;
+    });
+    const fileIn = h("input", { type: "file", id: "tn-files", multiple: true, class: "visually-hidden" });
+    const pickBtn = h("label", { for: "tn-files", class: "btn" }, "Attach files");
+    const progress = h("span", { class: "hint", role: "status" });
+    fileIn.addEventListener("change", async () => {
+      err.textContent = "";
+      const files = [...fileIn.files]; fileIn.value = "";
+      if (!files.length) return;
+      if (!needName()) return;
+      const big = files.find(f => f.size > MAX_UPLOAD);
+      if (big) { err.textContent = `"${big.name}" is larger than 25 MB. Upload it to Google Drive and add the link in a note instead.`; return; }
+      pickBtn.classList.add("disabled");
+      const added = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        progress.textContent = `Uploading ${i + 1} of ${files.length}: ${f.name}…`;
+        try {
+          const r = await apiCall(`files?task=${encodeURIComponent(t.id)}&name=${encodeURIComponent(f.name)}`, { method: "POST", headers: { "content-type": f.type || "application/octet-stream" }, body: f });
+          added.push({ key: r.key, name: f.name, size: f.size, type: f.type || "", by: S.me, at: new Date().toISOString() });
+        } catch (e) { err.textContent = `"${f.name}" didn't upload: ${e.message || "try again"}.`; break; }
+      }
+      if (added.length) {
+        try {
+          await S.db.doc("tasks/" + t.id).update({ attachments: [...(cur().attachments || []), ...added], ...stamp() });
+          drawFiles(); toast(added.length === 1 ? "File attached" : `${added.length} files attached`);
+        } catch (e) { err.textContent = e.message || "The files uploaded but couldn't be linked to this job. Try again."; }
+      }
+      progress.textContent = ""; pickBtn.classList.remove("disabled");
+    });
+    nameField.hidden = !!S.me;
+    drawNotes(); drawFiles();
+    wrap.append(
+      h("span", { class: "lbl", text: "Team notes" }), notesList,
+      h("div", { class: "field" }, h("label", { for: "tn-text", class: "visually-hidden", text: "New note" }), noteIn),
+      h("div", { class: "proj-actions" }, addNote),
+      h("span", { class: "lbl", text: "Attachments" }), filesList,
+      h("div", { class: "proj-actions" }, fileIn, pickBtn, progress,
+        h("span", { class: "hint", text: "Photos, PDFs, plans or documents up to 25 MB each." })),
+      nameField, err);
+    return wrap;
+  }
+
+  // ---------- unlock ----------
+  function openUnlock() {
+    if (!S.db) { toast("Still connecting. Try again in a moment."); return; }
+    const nm = h("input", { type: "text", id: "u-name", placeholder: "e.g. Shawn, Carlos", value: S.me || "", autocomplete: "name" });
+    const code = h("input", { type: "password", id: "u-code", placeholder: "Team passcode", autocomplete: "off" });
+    const err = h("div", { class: "err", role: "alert" });
+    const go = h("button", { class: "btn primary", type: "button" }, "Unlock editing");
+    const submit = async () => {
+      err.textContent = "";
+      const n = nm.value.trim(), c = code.value.trim();
+      if (!n) { err.textContent = "Enter your name so the team can see who made each change."; nm.focus(); return; }
+      if (!c) { err.textContent = "Enter the team passcode."; code.focus(); return; }
+      go.disabled = true;
+      try {
+        const r = await apiCall("unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: c, name: n }) });
+        store("token", r.token); store("editor", "1");
+        S.me = n; store("name", n); S.canWrite = true; closeSheet(); renderAll(); toast("Editing unlocked on this device");
+      } catch (e) {
+        go.disabled = false;
+        if (e && e.code === "permission-denied") { err.textContent = "That passcode didn't work. Check it with the project coordinator and try again."; code.select(); }
+        else if (e && e.code === "not-configured") err.textContent = e.message;
+        else err.textContent = "Couldn't reach the schedule. Check your connection and try again.";
+      }
+    };
+    go.addEventListener("click", submit);
+    code.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+    openSheet("Unlock editing", h("div", { class: "sheet-b" },
+      h("div", { class: "hint", text: "Anyone with the link can view the schedule. Editing needs the team passcode, entered once per device. Your name is saved with every change you make." }),
+      field("Your name", nm, "u-name"), field("Team passcode", code, "u-code"), err),
+      h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: closeSheet }, "Cancel"), go), null);
+  }
+  async function lockDevice() {
+    try { await apiCall("lock", { method: "POST" }); } catch (e) {}
+    store("token", ""); store("editor", "");
+    S.canWrite = false; closeSheet(); renderAll(); toast("Editing locked on this device");
+  }
+
+  // ---------- backup ----------
+  function downloadBackup() {
+    const pack = m => [...m.values()].map(x => { const d = Object.assign({}, x); const id = d.id; delete d.id; return { id, data: d }; });
+    const out = { exportedAt: new Date().toISOString(), projects: pack(S.projects), tasks: pack(S.tasks), logs: pack(S.logs) };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = `Job Site Schedule backup ${todayIso()}.json`;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(`Backup downloaded: ${plural(out.projects.length, "project")}, ${plural(out.tasks.length, "job")}, ${plural(out.logs.length, "log")}`);
+  }
+
+  // ---------- import ----------
+  async function importFile(file, out) {
+    out.textContent = "";
+    let j;
+    try { j = JSON.parse(await file.text()); } catch (e) { out.textContent = "That file isn't a schedule export. Pick the .json file you were sent."; return; }
+    const groups = [["projects", j.projects], ["tasks", j.tasks], ["logs", j.logs]];
+    let n = 0, skipped = 0;
+    try {
+      let batch = S.db.batch(), inBatch = 0;
+      for (const [col, rows] of groups) {
+        for (const r of (Array.isArray(rows) ? rows : [])) {
+          if (!r || typeof r.id !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(r.id) || !r.data || typeof r.data !== "object") { skipped++; continue; }
+          if (S[col].has(r.id)) { skipped++; continue; }
+          batch.set(S.db.collection(col).doc(r.id), r.data); n++; inBatch++;
+          if (inBatch >= 400) { await batch.commit(); batch = S.db.batch(); inBatch = 0; }
+        }
+      }
+      if (inBatch) await batch.commit();
+      out.textContent = `Imported ${n} item${n === 1 ? "" : "s"}` + (skipped ? `, skipped ${skipped} already here or unreadable.` : ".");
+      toast("Import finished");
+    } catch (e) {
+      out.textContent = e && e.code === "permission-denied" ? "This device isn't unlocked for editing." : "The import stopped partway. Run it again; items already imported are skipped.";
+    }
+  }
+
+  // ---------- daily logs ----------
+  function logsOn(di) { return [...S.logs.values()].filter(l => l.date === di && coordMatchProj(l.projectId) && (S.project === "all" || l.projectId === S.project)); }
+  function openDayLog(di) {
+    if (S.project !== "all" && S.projects.has(S.project)) return openLogForm(S.project, di);
+    if (S.projects.size === 1) return openLogForm(sortedProjects()[0].id, di);
+    openDay(di);
+  }
+  function logSection(di, items) {
+    if (!S.db || !S.projects.size) return null;
+    let projs = S.project !== "all" ? sortedProjects().filter(p => p.id === S.project)
+      : sortedProjects().filter(p => items.some(t => t.projectId === p.id) || S.logs.has(logId(p.id, di)));
+    if (!projs.length) projs = sortedProjects();
+    const rows = projs.map(p => {
+      const l = S.logs.get(logId(p.id, di));
+      if (!l && !S.canWrite) return null;
+      const sum = l ? [l.crewCount ? `${l.crewCount} on crew` : "", l.hours ? `${l.hours} hrs` : "", l.weather || "", (l.percent !== "" && l.percent != null) ? `${l.percent}% complete` : ""].filter(Boolean).join(" · ") || "Log written" : "No log yet";
+      return h("div", { class: "logrow" },
+        h("div", null, h("b", { text: p.name || "Untitled project" }), h("span", { class: "hint", text: sum })),
+        h("button", { class: "btn" + (l ? "" : " primary"), type: "button", onclick: () => openLogForm(p.id, di) }, l ? "Open log" : "Write log"));
+    }).filter(Boolean);
+    return h("div", { class: "field" }, h("div", { class: "section-lbl", text: "Daily logs" }),
+      rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "No log for this day." }));
+  }
+  async function openLogForm(pid, di) {
+    const ro = !S.canWrite || !S.db;
+    const id = logId(pid, di);
+    const l = S.logs.get(id) || {};
+    const p = S.projects.get(pid) || {};
+    const crew = h("input", { type: "text", id: "l-crew", placeholder: "Names of who was on site, including subs", value: l.crew || "", disabled: ro, autocomplete: "off" });
+    const count = h("input", { type: "text", id: "l-count", inputmode: "numeric", placeholder: "0", value: l.crewCount ?? "", disabled: ro, autocomplete: "off" });
+    const hours = h("input", { type: "text", id: "l-hours", inputmode: "decimal", placeholder: "0", value: l.hours ?? "", disabled: ro, autocomplete: "off" });
+    const weather = h("input", { type: "text", id: "l-weather", placeholder: "e.g. 45°F, light rain after 2 PM", value: l.weather || "", disabled: ro, autocomplete: "off" });
+    const done = h("textarea", { id: "l-done", rows: "3", placeholder: "What got done today", value: l.completed || "", disabled: ro });
+    const probs = h("textarea", { id: "l-probs", rows: "3", placeholder: "Problems, delays, missing materials, safety issues", value: l.problems || "", disabled: ro });
+    const pct = h("input", { type: "text", id: "l-pct", inputmode: "numeric", placeholder: "0 to 100", value: l.percent ?? "", disabled: ro, autocomplete: "off" });
+    const photo = h("input", { type: "text", id: "l-photo", inputmode: "url", placeholder: "Paste a Google Drive link (optional)", value: l.photoLink || "", disabled: ro, autocomplete: "off" });
+    const err = h("div", { class: "err", role: "alert" });
+    const meta = h("div", { class: "hint" });
+    const body = h("div", { class: "sheet-b" },
+      h("div", { class: "hint", text: `${p.name || "Project"} · ${fmtDay(di)}` }),
+      field("Crew on site", crew, "l-crew"),
+      h("div", { class: "row2" }, field("Crew count", count, "l-count"), field("Total hours", hours, "l-hours")),
+      field("Weather", weather, "l-weather"),
+      field("Work completed", done, "l-done"),
+      field("Problems or delays", probs, "l-probs"),
+      h("div", { class: "row2" }, field("Project % complete", pct, "l-pct"), field("Photos link", photo, "l-photo")),
+      isLink(l.photoLink) ? h("a", { href: l.photoLink, target: "_blank", rel: "noopener noreferrer", class: "hint", text: "Open photos" }) : null,
+      err, meta);
+    const leftBox = h("div", { class: "left" });
+    if (!ro && S.logs.has(id)) {
+      const del = h("button", { class: "btn danger", type: "button" }, "Delete log");
+      del.addEventListener("click", () => leftBox.replaceChildren(h("span", { class: "hint", text: "Delete this log?" }),
+        h("button", { class: "btn danger solid", type: "button", onclick: async () => { if (await write(() => S.db.doc("logs/" + id).delete(), "Log deleted")) closeSheet(); } }, "Yes, delete"),
+        h("button", { class: "btn", type: "button", onclick: () => leftBox.replaceChildren(del) }, "Keep")));
+      leftBox.append(del);
+    }
+    const saveBtn = ro ? null : h("button", { class: "btn primary", type: "button" }, "Save log");
+    const foot = h("div", { class: "sheet-f" }, leftBox, h("button", { class: "btn", type: "button", onclick: () => openDay(di) }, "Back to day"), saveBtn);
+    if (saveBtn) saveBtn.addEventListener("click", async () => {
+      err.textContent = "";
+      const num = (el, lbl, max) => { const v = el.value.trim(); if (v === "") return ""; const n = Number(v); if (!isFinite(n) || n < 0 || (max != null && n > max)) { err.textContent = `${lbl} should be a number${max != null ? " from 0 to " + max : ""}.`; el.focus(); throw 0; } return n; };
+      let c, hr, pc;
+      try { c = num(count, "Crew count"); hr = num(hours, "Total hours"); pc = num(pct, "Percent complete", 100); } catch (e) { return; }
+      const ph = photo.value.trim();
+      if (ph && !isLink(ph)) { err.textContent = "The photos link should start with https://, like a Google Drive share link."; photo.focus(); return; }
+      saveBtn.disabled = true;
+      const data = { projectId: pid, date: di, crew: crew.value.trim(), crewCount: c, hours: hr, weather: weather.value.trim(), completed: done.value.trim(), problems: probs.value.trim(), percent: pc, photoLink: ph, ...stamp() };
+      if (!l.createdBy) { data.createdBy = S.me || null; data.createdAt = new Date().toISOString(); } else { data.createdBy = l.createdBy; data.createdAt = l.createdAt || null; }
+      if (await write(() => S.db.doc("logs/" + id).set(data), "Daily log saved")) openDay(di); else saveBtn.disabled = false;
+    });
+    openSheet("Daily log", body, foot, null);
+    if (l.updatedBy) {
+      const when = l.updatedAt ? new Date(l.updatedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+      meta.textContent = `Last updated by ${personName(l.updatedBy)}${when ? " on " + when : ""}.`;
+    }
+  }
+
+  // ---------- export ----------
+  // The spreadsheet library is large, so it's only fetched the first time someone exports.
+  let xlsxLoading = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve();
+    if (!xlsxLoading) xlsxLoading = new Promise((resolve, reject) => {
+      const sc = document.createElement("script");
+      sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+      sc.onload = () => window.XLSX ? resolve() : reject(new Error("missing"));
+      sc.onerror = () => { xlsxLoading = null; sc.remove(); reject(new Error("load failed")); };
+      document.head.append(sc);
+    });
+    return xlsxLoading;
+  }
+  async function exportXlsx() {
+    if (!window.XLSX) {
+      const btn = $("btn-export"), label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Preparing…";
+      try { await loadXlsx(); }
+      catch (e) { toast("The spreadsheet tool didn't load. Check your connection and try again."); return; }
+      finally { btn.disabled = false; btn.textContent = label; }
+    }
+    const [a, b] = range(); const A = iso(a), B = iso(b);
+    const items = filtered().filter(t => t.start <= B && endOf(t) >= A).sort((x, y) => x.start.localeCompare(y.start));
+    const pn = id => (S.projects.get(id) || {}).name || "";
+    const yn = v => v ? "Yes" : "No";
+    const head = ["Project", "Work to be done", "Category", "In-house / Sub", "Project coordinator", "Project lead", "Squadron leader", "Approved workers", "Subcontractors", "Start", "Deadline", "Status", "Inspection", "Budget", "Actual cost", "Materials", "Materials delivered", "Next expected delivery", "Work order created", "Waiting on", "Tour", "Tour date", "Tour time", "Tour visitors", "Tour headcount", "Tour comments", "Class", "Class date", "Class time", "Class group", "Class headcount", "Class comments", "Media requested", "Media: what to capture", "Media link", "Architect questions", "Questions", "Answers", "Answered on", "Notes", "Team notes", "Attachments"];
+    const rows = items.map(t => [pn(t.projectId), t.title || "", (TRADE[t.trade] || TRADE.other).label, t.crew === "sub" ? "Sub" : "In-house", isInsp(t) ? "" : jobCoord(t), isInsp(t) ? "" : jobLead(t), t.squadLeader || "", workersOf(t).join(", "), subsOf(t).join(", "), t.start, endOf(t),
+      STATUS[t.status] || "Scheduled", isInsp(t) ? `${INSP_TYPE[t.inspType] ? INSP_TYPE[t.inspType] + ": " : ""}${INSP[t.inspResult] || "Pending"}` : "", (t.budget == null || t.budget === "") ? "" : Number(t.budget), numOrNull(t.actualCost) ?? "",
+      matList(t).map(m => `${lineText(m)} - ${lineStatus(m)}`).join("; "),
+      matList(t).length ? `${matList(t).filter(m => m.status === "delivered").length} of ${matList(t).length}` : "",
+      matList(t).filter(m => linePending(m) && m.date).map(m => m.date).sort()[0] || "", isInsp(t) ? "" : yn(t.workOrder),
+      (Array.isArray(t.dependsOn) ? t.dependsOn : []).map(id => S.tasks.get(id)).filter(Boolean).map(x => `${x.title || "Untitled"} (${depState(x)})`).join("; "),
+      yn(t.obsTour), t.obsTour ? visitDate(t, "tour") : "", t.obsTour ? fmtTime(t.tourTime) : "", t.obsTour ? (t.tourWho || "") : "", t.obsTour ? (t.tourCount ?? "") : "", t.obsTour ? (t.tourNotes || "") : "",
+      yn(t.obsRequity), t.obsRequity ? visitDate(t, "req") : "", t.obsRequity ? fmtTime(t.reqTime) : "", t.obsRequity ? (t.reqWho || "") : "", t.obsRequity ? (t.reqCount ?? "") : "", t.obsRequity ? (t.reqNotes || "") : "",
+      yn(t.media), t.media ? (t.mediaWhat || "") : "", t.media ? (t.mediaLink || "") : "",
+      archList(t).length ? (archOpen(t) ? `${archOpenCount(t)} open of ${archList(t).length}` : "All answered") : "No",
+      archList(t).map((x, i) => `${i + 1}. ${x.q}`).join("\n"), archList(t).map((x, i) => `${i + 1}. ${(x.a || "").trim() || "(no answer yet)"}`).join("\n"),
+      archList(t).map((x, i) => `${i + 1}. ${x.answeredAt || ""}`).join("\n"),
+      t.notes || "",
+      (t.noteLog || []).map(n => `${(n.at || "").slice(0, 10)} ${personName(n.by)}: ${n.text}`).join("\n"),
+      (t.attachments || []).map(f => f.name).join(", ")]);
+    const total = items.reduce((s, t) => s + (Number(t.budget) || 0), 0);
+    const ws1 = XLSX.utils.aoa_to_sheet([head, ...rows, [], ["Totals", "", "", "", "", "", "", "", "", "", "", "", "", total, items.reduce((s, t) => s + (numOrNull(t.actualCost) || 0), 0)]]);
+    ws1["!cols"] = head.map(x => ({ wch: ["Work to be done", "Materials", "Media: what to capture", "Notes"].includes(x) ? 40 : x === "Project" ? 24 : 16 }));
+    const chead = ["Changed on", "Changed by", "Project", "Work to be done", "What changed", "From", "To", "Days / amount", "Type", "Tied to", "Coordinator", "Lead", "Squadron leader", "Subcontractors", "Reason"];
+    const TYPE_TXT = { delay: "Unexpected delay", early: "Unexpected early start", planned: "Planned", overrun: "Unexpected cost increase", savings: "Unexpected savings" };
+    const crows = items.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => [
+      (e.at || "").slice(0, 10), e.by || "", pn(t.projectId), t.title || "",
+      e.kind === "budget" ? "Budget" : "Dates",
+      e.kind === "budget" ? e.from : `${e.from.start} to ${e.from.end}`, e.kind === "budget" ? e.to : `${e.to.start} to ${e.to.end}`,
+      e.kind === "budget" ? e.amount : e.days, TYPE_TXT[e.type] || e.type || "", tiedList(e).map(r => ROLE_TXT[r] || r).join(", "), e.coordinator || "", e.lead || "", e.squadLeader || "", (e.subs || []).join(", "), e.reason || ""]));
+    const ws4 = XLSX.utils.aoa_to_sheet([chead, ...crows]);
+    ws4["!cols"] = chead.map(x => ({ wch: ["Work to be done", "Reason"].includes(x) ? 40 : 18 }));
+    const logs = [...S.logs.values()].filter(l => l.date >= A && l.date <= B && (S.project === "all" || l.projectId === S.project)).sort((x, y) => x.date.localeCompare(y.date) || pn(x.projectId).localeCompare(pn(y.projectId)));
+    const lhead = ["Date", "Project", "Crew on site", "Crew count", "Total hours", "Weather", "Work completed", "Problems or delays", "Project % complete", "Photos link"];
+    const lrows = logs.map(l => [l.date, pn(l.projectId), l.crew || "", l.crewCount ?? "", l.hours ?? "", l.weather || "", l.completed || "", l.problems || "", l.percent ?? "", l.photoLink || ""]);
+    const ws2 = XLSX.utils.aoa_to_sheet([lhead, ...lrows]);
+    ws2["!cols"] = lhead.map((x, i) => ({ wch: [2, 6, 7].includes(i) ? 40 : 16 }));
+    const mhead = ["Project", "Work to be done", "Start", "Material", "Quantity", "Status", "Expected delivery"];
+    const mrows = items.flatMap(t => matList(t).map(m => [pn(t.projectId), t.title || "", t.start, m.name, m.qty || "", MAT[m.status] || "Needed", m.date || ""]));
+    const ws3 = XLSX.utils.aoa_to_sheet([mhead, ...mrows]);
+    ws3["!cols"] = mhead.map((x, i) => ({ wch: [1, 3].includes(i) ? 36 : 16 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws1, "Work items");
+    XLSX.utils.book_append_sheet(wb, ws3, "Materials");
+    XLSX.utils.book_append_sheet(wb, ws2, "Daily logs");
+    XLSX.utils.book_append_sheet(wb, ws4, "Changes");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const proj = S.project !== "all" ? " " + pn(S.project).replace(/[\\/:*?"<>|]/g, "") : "";
+    const label = $("period").textContent.replace(/,/g, "");
+    try {
+      const url = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const a = document.createElement("a"); a.href = url; a.download = `Job Site Schedule${proj} ${label}.xlsx`;
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast("Spreadsheet downloaded");
+    } catch (e) { toast("The spreadsheet couldn't be downloaded on this device."); }
+  }
+
+  // ---------- people ----------
+  const workersOf = t => Array.isArray(t.workers) ? t.workers.filter(Boolean)
+    : (t.assignee ? String(t.assignee).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean) : []);
+  const subsOf = t => Array.isArray(t.subs) ? t.subs.filter(Boolean) : [];
+  const usesSub = t => isInsp(t) || t.crew === "sub";
+  const jobCoord = t => (t.coordinator != null ? t.coordinator : (S.projects.get(t.projectId) || {}).coordinator || "").trim();
+  const jobLead = t => (t.lead != null ? t.lead : (S.projects.get(t.projectId) || {}).lead || "").trim();
+  function knownNames() {
+    const set = new Map();
+    const add = n => { n = (n || "").trim(); if (n && !/^u_[A-Za-z0-9_-]{10,}$/.test(n) && !set.has(n.toLowerCase())) set.set(n.toLowerCase(), n); };
+    for (const p of S.projects.values()) { add(p.coordinator); add(p.lead); }
+    for (const t of S.tasks.values()) { add(t.coordinator); add(t.lead); add(t.squadLeader); workersOf(t).forEach(add); subsOf(t).forEach(add); }
+    add(S.me);
+    return [...set.values()].sort((a, b) => a.localeCompare(b));
+  }
+  function namesList() {
+    let dl = $("names-dl");
+    if (!dl) { dl = h("datalist", { id: "names-dl" }); document.body.append(dl); }
+    dl.replaceChildren(...knownNames().map(n => h("option", { value: n })));
+    let sl = $("subs-dl");
+    if (!sl) { sl = h("datalist", { id: "subs-dl" }); document.body.append(sl); }
+    const subs = new Map();
+    for (const t of S.tasks.values()) for (const n of subsOf(t)) if (!subs.has(n.toLowerCase())) subs.set(n.toLowerCase(), n);
+    sl.replaceChildren(...[...subs.values()].sort((a, b) => a.localeCompare(b)).map(n => h("option", { value: n })));
+    return "names-dl";
+  }
+  function chipInput(id, names, ro, placeholder, listId) {
+    let list = names.slice();
+    const wrap = h("div", { class: "chips" });
+    const inp = h("input", { type: "text", id, list: listId || "names-dl", placeholder, autocomplete: "off", disabled: ro });
+    const draw = () => {
+      wrap.replaceChildren(...list.map((n, i) => h("span", { class: "chip-n" }, n,
+        ro ? null : h("button", { type: "button", "aria-label": "Remove " + n, onclick: () => { list.splice(i, 1); draw(); inp.focus(); } }, "×"))), ro ? null : inp);
+      if (ro && !list.length) wrap.append(h("span", { class: "hint", text: "None listed" }));
+    };
+    const commit = () => {
+      const parts = inp.value.split(/[,;]+/).map(x => x.trim()).filter(Boolean);
+      for (const n of parts) if (!list.some(x => x.toLowerCase() === n.toLowerCase())) list.push(n);
+      inp.value = ""; draw(); inp.focus();
+    };
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); if (inp.value.trim()) commit(); }
+      else if (e.key === "Backspace" && !inp.value && list.length) { list.pop(); draw(); inp.focus(); }
+    });
+    inp.addEventListener("input", e => {
+      // a pick from the suggestion list arrives as a non-typed input; add it right away
+      if (!e.inputType || e.inputType === "insertReplacementText") { if (knownNames().some(n => n === inp.value)) commit(); }
+    });
+    inp.addEventListener("blur", () => { if (inp.value.trim()) commit(); });
+    wrap.addEventListener("click", e => { if (e.target === wrap) inp.focus(); });
+    draw();
+    wrap.read = () => { if (inp.value.trim()) commit(); return list.slice(); };
+    return wrap;
+  }
+
+  // ---------- schedule & budget changes ----------
+  const numOrNull = v => (v === "" || v == null || !isFinite(Number(v))) ? null : Number(v);
+  const plural = (n, w) => `${n} ${w}${Math.abs(n) === 1 ? "" : "s"}`;
+  const rangeTxt = (a, b) => a === b ? fmtShort(a) : `${fmtShort(a)} to ${fmtShort(b)}`;
+  const shiftTxt = (n, what) => n === 0 ? "" : `${what} ${plural(Math.abs(n), "day")} ${n > 0 ? "later" : "earlier"}`;
+  const ROLE_TXT = { coordinator: "Project coordinator", lead: "Project lead", squad: "Squadron leader", sub: "Subcontractor", disputed: "Disputed", external: "External" };
+
+  // "Tied to" holds a list of roles; older records stored one word.
+  function tiedList(e) {
+    const v = e && e.tiedTo;
+    if (Array.isArray(v)) return v.filter(Boolean);
+    if (!v) return [];
+    if (v === "both") return ["coordinator", "lead"];
+    if (v === "neither") return ["external"];
+    return [v];
+  }
+  const TIED_ORDER = ["coordinator", "lead", "squad", "sub", "disputed", "external"];
+  function tiedOptions(names) {
+    return [["coordinator", "Project coordinator", names.coord || "No name set for this job"], ["lead", "Project lead", names.lead || "No name set for this job"],
+      ["squad", "Squadron leader", names.squad || "No name set for this job"],
+      ...(names.showSub ? [["sub", "Subcontractor", names.subs && names.subs.length ? names.subs.join(", ") : "No subcontractor named on this job"]] : []),
+      ["disputed", "Disputed", "Fault is contested between the people checked"],
+      ["external", "External", "Outside cause (weather, owner, city, utility…)"]];
+  }
+  function checkGroup(name, opts, values) {
+    const wrap = h("div", { class: "rgroup", role: "group" });
+    for (const [v, l, sub] of opts) {
+      wrap.append(h("label", { class: "ropt" },
+        h("input", { type: "checkbox", name, value: v, checked: values.includes(v) }),
+        h("span", null, h("b", { text: l }), sub ? h("small", { text: sub }) : null)));
+    }
+    wrap.vals = () => [...wrap.querySelectorAll("input:checked")].map(x => x.value).sort((a, b) => TIED_ORDER.indexOf(a) - TIED_ORDER.indexOf(b));
+    return wrap;
+  }
+  function radioGroup(name, opts, value) {
+    const wrap = h("div", { class: "rgroup", role: "radiogroup" });
+    for (const [v, l, sub] of opts) {
+      wrap.append(h("label", { class: "ropt" },
+        h("input", { type: "radio", name, value: v, checked: v === value }),
+        h("span", null, h("b", { text: l }), sub ? h("small", { text: sub }) : null)));
+    }
+    wrap.val = () => (wrap.querySelector("input:checked") || {}).value || "";
+    return wrap;
+  }
+
+  // Resolves to an array of history entries (possibly empty), or null if the person backed out.
+  function askChange(cur, nv) {
+    const p = S.projects.get(cur.projectId) || {};
+    const coord = jobCoord(cur), lead = jobLead(cur), squad = (cur.squadLeader || "").trim(), subs = subsOf(cur);
+    const os = cur.start, oe = endOf(cur), ns = nv.start, ne = nv.end && nv.end >= nv.start ? nv.end : nv.start;
+    const sS = dayDiff(parse(os), parse(ns)), eS = dayDiff(parse(oe), parse(ne));
+    const dChanged = sS !== 0 || eS !== 0;
+    const ob = numOrNull(cur.budget), nb = numOrNull(nv.budget);
+    const bChanged = ob != null && nb != null && ob !== nb;
+    if (!dChanged && !bChanged) return Promise.resolve([]);
+
+    return new Promise(resolve => {
+      const box = $("cbox");
+      const err = h("div", { class: "err", role: "alert" });
+      const tiedOpts = tiedOptions({ coord, lead, squad, subs, showSub: usesSub(cur) });
+      const parts = [];
+      let dType, dTied, bType, bTied;
+      if (dChanged) {
+        const later = sS > 0 || eS > 0, earlier = sS < 0 || eS < 0;
+        dType = radioGroup("cm-dtype", [["delay", "Unexpected delay", "Work started or will finish later than planned"], ["early", "Unexpected early start", "Work started or will finish sooner than planned"], ["planned", "Planned change", "Not counted in the stats"]], later && !earlier ? "delay" : earlier && !later ? "early" : "");
+        dTied = checkGroup("cm-dtied", tiedOpts, []);
+        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to (choose all that apply)" }), dTied);
+        const sync = () => { tiedWrap.hidden = dType.val() === "planned"; };
+        dType.addEventListener("change", sync);
+        parts.push(h("section", { class: "csec" },
+          h("div", { class: "csum" }, h("b", { text: "Dates: " }), `${rangeTxt(os, oe)} → ${rangeTxt(ns, ne)}`,
+            h("div", { class: "hint", text: [shiftTxt(sS, "Start"), shiftTxt(eS, "End")].filter(Boolean).join(" · ") })),
+          h("div", { class: "field" }, h("span", { class: "lbl", text: "What kind of change?" }), dType), tiedWrap));
+      }
+      if (bChanged) {
+        const up = nb > ob;
+        bType = radioGroup("cm-btype", [["overrun", "Unexpected cost increase"], ["savings", "Unexpected savings"], ["planned", "Planned change", "Not counted in the stats"]], up ? "overrun" : "savings");
+        bTied = checkGroup("cm-btied", tiedOpts, []);
+        const tiedWrap = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to (choose all that apply)" }), bTied);
+        bType.addEventListener("change", () => { tiedWrap.hidden = bType.val() === "planned"; });
+        parts.push(h("section", { class: "csec" },
+          h("div", { class: "csum" }, h("b", { text: "Budget: " }), `${money(ob)} → ${money(nb)}`,
+            h("div", { class: "hint", text: `${nb > ob ? "+" : "−"}${money(Math.abs(nb - ob))}` })),
+          h("div", { class: "field" }, h("span", { class: "lbl", text: "What kind of change?" }), bType), tiedWrap));
+      }
+      const reason = h("textarea", { id: "cm-reason", rows: "2", placeholder: "Optional: what happened (e.g. drywall delivery came 3 days late)" });
+      const done = v => { $("cmodal").hidden = true; box.replaceChildren(); S.cmodalCancel = null; resolve(v); };
+      const save = h("button", { class: "btn primary", type: "button" }, "Save change");
+      save.addEventListener("click", () => {
+        err.textContent = "";
+        const out = [], at = new Date().toISOString(), r = reason.value.trim();
+        const base = { at, by: S.me || "Someone", coordinator: coord, lead, squadLeader: squad, subs: subs.slice(), reason: r };
+        if (dChanged) {
+          const ty = dType.val(), ti = dTied.vals();
+          if (!ty) { err.textContent = "Pick what kind of date change this was."; return; }
+          if (ty !== "planned" && !ti.length) { err.textContent = "Check at least one option under Tied to for the date change."; return; }
+          if (ti.length === 1 && ti[0] === "disputed") { err.textContent = "Disputed needs the people involved checked too, like Project coordinator and Project lead."; return; }
+          out.push({ ...base, kind: "dates", type: ty, tiedTo: ty === "planned" ? [] : ti, from: { start: os, end: oe }, to: { start: ns, end: ne }, startShift: sS, endShift: eS, days: Math.max(Math.abs(sS), Math.abs(eS)) });
+        }
+        if (bChanged) {
+          const ty = bType.val(), ti = bTied.vals();
+          if (!ty) { err.textContent = "Pick what kind of budget change this was."; return; }
+          if (ty !== "planned" && !ti.length) { err.textContent = "Check at least one option under Tied to for the budget change."; return; }
+          if (ti.length === 1 && ti[0] === "disputed") { err.textContent = "Disputed needs the people involved checked too, like Project coordinator and Project lead."; return; }
+          out.push({ ...base, kind: "budget", type: ty, tiedTo: ty === "planned" ? [] : ti, from: ob, to: nb, amount: nb - ob });
+        }
+        done(out);
+      });
+      box.replaceChildren(
+        h("div", { class: "sheet-h" }, h("h2", { text: "Schedule change" })),
+        h("div", { class: "sheet-b" }, h("div", { class: "hint", text: cur.title || "Untitled work" }), parts, field("Reason", reason, "cm-reason"), err),
+        h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: () => done(null) }, "Undo change"), save));
+      S.cmodalCancel = () => done(null);
+      $("cmodal").hidden = false;
+      const first = box.querySelector("input[type=radio]"); if (first) setTimeout(() => first.focus(), 30);
+    });
+  }
+
+  async function commitDates(t, ns, ne) {
+    const cur = S.tasks.get(t.id) || t;
+    const end = ne === ns ? "" : ne;
+    const entries = await askChange(cur, { start: ns, end, budget: cur.budget });
+    if (entries === null) { renderAll(); toast("Change undone"); return; }
+    const upd = { start: ns, end, history: [...(cur.history || []), ...entries], datesSetAt: todayIso(), ...stamp() };
+    const off = dayDiff(parse(cur.start), parse(ns));
+    if (off && off === dayDiff(parse(endOf(cur)), parse(ne))) {
+      if (cur.obsTour) upd.tourDate = iso(addDays(parse(visitDate(cur, "tour")), off));
+      if (cur.obsRequity) upd.reqDate = iso(addDays(parse(visitDate(cur, "req")), off));
+    }
+    await write(() => S.db.doc("tasks/" + t.id).update(upd), "Schedule updated");
+  }
+
+  // ---------- drag to resize ----------
+  function startDrag(e, t, edge, onCommit) {
+    if (e.button !== undefined && e.button !== 0) return;
+    const moveMode = edge === "move";
+    const isTouch = e.pointerType === "touch";
+    if (!moveMode) { e.preventDefault(); e.stopPropagation(); }
+    const cellAt = (x, y) => { const el = document.elementsFromPoint(x, y).find(c => c.classList && c.classList.contains("cell") && c.dataset.date); return el ? el.dataset.date : null; };
+    const os = t.start, oe = endOf(t);
+    let ns = os, ne = oe;
+    const anchor = moveMode ? cellAt(e.clientX, e.clientY) : null;
+    if (moveMode && !anchor) return;
+    const bar = e.currentTarget && e.currentTarget.closest ? e.currentTarget.closest(".bar, .idot") : null;
+    const x0 = e.clientX, y0 = e.clientY;
+    let armed = !(moveMode && isTouch);   // on touch, press and hold before moving so normal scrolling still works
+    let active = !moveMode;               // a move only starts once the job has shifted at least a day
+    let holdTimer = null;
+    const lbl = $("draglbl");
+    const paint = () => document.querySelectorAll(".cell[data-date]").forEach(c => c.classList.toggle("drag-on", c.dataset.date >= ns && c.dataset.date <= ne));
+    const showLabel = ev => {
+      const n = dayDiff(parse(ns), parse(ne)) + 1;
+      const off = dayDiff(parse(os), parse(ns));
+      lbl.textContent = `${rangeTxt(ns, ne)} · ${plural(n, "day")}` + (moveMode && off ? ` · ${off > 0 ? "+" : "−"}${plural(Math.abs(off), "day")}` : "");
+      lbl.hidden = false;
+      lbl.style.left = Math.min(window.innerWidth - lbl.offsetWidth - 8, Math.max(8, ev.clientX + 12)) + "px";
+      lbl.style.top = Math.max(8, ev.clientY - 44) + "px";
+    };
+    const blockTouch = ev => { if (armed && moveMode) ev.preventDefault(); };
+    const move = ev => {
+      if (!armed) {
+        if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 8) cleanup();
+        return;
+      }
+      const di = cellAt(ev.clientX, ev.clientY);
+      if (di) {
+        if (edge === "start") ns = di > oe ? oe : di;
+        else if (edge === "end") ne = di < os ? os : di;
+        else {
+          const off = dayDiff(parse(anchor), parse(di));
+          ns = iso(addDays(parse(os), off)); ne = iso(addDays(parse(oe), off));
+          if (off !== 0 && !active) { active = true; if (bar) bar.classList.add("moving"); }
+        }
+      }
+      if (!active) return;
+      paint(); showLabel(ev);
+    };
+    const cleanup = () => {
+      clearTimeout(holdTimer);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("touchmove", blockTouch);
+      lbl.hidden = true;
+      if (bar) bar.classList.remove("moving", "armed");
+      document.querySelectorAll(".cell.drag-on").forEach(c => c.classList.remove("drag-on"));
+    };
+    const end = () => {
+      cleanup();
+      if (active || (moveMode && isTouch && armed)) { S.suppressClick = true; setTimeout(() => { S.suppressClick = false; }, 80); }
+      if (active && (ns !== os || ne !== oe)) { if (onCommit) onCommit(ns, ne); else commitDates(t, ns, ne); }
+    };
+    const cancel = () => { ns = os; ne = oe; active = false; cleanup(); };
+    if (!armed) holdTimer = setTimeout(() => {
+      armed = true;
+      if (bar) bar.classList.add("armed");
+      try { navigator.vibrate && navigator.vibrate(12); } catch (err) {}
+    }, 350);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", cancel);
+    window.addEventListener("touchmove", blockTouch, { passive: false });
+    if (!moveMode) paint();
+  }
+
+  // ---------- change records (fix or delete stats) ----------
+  const CHANGE_TYPE = { delay: "Unexpected delay", early: "Unexpected early start", planned: "Planned change", overrun: "Unexpected cost increase", savings: "Unexpected savings" };
+  const sameEntry = (a, b) => a && b && a.at === b.at && a.kind === b.kind;
+  function tiedName(e) {
+    return tiedList(e).map(r => r === "coordinator" ? `Coordinator${e.coordinator ? " · " + e.coordinator : ""}`
+      : r === "lead" ? `Lead${e.lead ? " · " + e.lead : ""}`
+      : r === "squad" ? `Squadron leader${e.squadLeader ? " · " + e.squadLeader : ""}`
+      : r === "sub" ? `Subcontractor${Array.isArray(e.subs) && e.subs.length ? " · " + e.subs.join(", ") : ""}`
+      : ROLE_TXT[r] || r);
+  }
+  async function saveHistory(t, mutate, msg) {
+    const cur = S.tasks.get(t.id);
+    if (!cur) { toast("That job was deleted."); return false; }
+    const hist = Array.isArray(cur.history) ? cur.history.slice() : [];
+    const upd = mutate(hist, cur);
+    if (!upd) { toast("That record changed or was already removed. Check the list and try again."); return false; }
+    return write(() => S.db.doc("tasks/" + t.id).update({ ...upd, ...stamp() }), msg);
+  }
+
+  function openRecords(startProj, startJob) {
+    const sj = startJob && S.tasks.get(startJob);
+    let proj = sj ? sj.projectId : startProj && S.projects.has(startProj) ? startProj : (sortedProjects()[0] || {}).id || "";
+    let job = sj ? sj.id : "";
+    let editing = null; // "taskId|at|kind"
+    const draw = () => {
+      const projSel = h("select", { class: "select", id: "rc-proj", "aria-label": "Project" }, sortedProjects().map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
+      projSel.value = proj;
+      projSel.addEventListener("change", () => { proj = projSel.value; job = ""; editing = null; draw(); });
+      const recCount = t => (Array.isArray(t.history) ? t.history.length : 0);
+      const jobList = [...S.tasks.values()].filter(t => t.projectId === proj && (recCount(t) || t.id === job)).sort((a, b) => a.start.localeCompare(b.start));
+      if (!jobList.some(t => t.id === job)) job = (jobList[0] || {}).id || "";
+      const jobSel = h("select", { class: "select", id: "rc-job", "aria-label": "Job", style: "flex:1 1 220px;min-width:0" },
+        jobList.map(t => h("option", { value: t.id, text: `${fmtShort(t.start)} · ${(TRADE[t.trade] || TRADE.other).code} · ${t.title || "Untitled"} (${plural(recCount(t), "record")})` })));
+      jobSel.value = job;
+      jobSel.addEventListener("change", () => { job = jobSel.value; editing = null; draw(); });
+      const recs = [...S.tasks.values()].filter(t => t.id === job && Array.isArray(t.history))
+        .flatMap(t => t.history.map(e => ({ t, e }))).filter(r => r.e && r.e.at)
+        .sort((a, b) => b.e.at.localeCompare(a.e.at));
+      const rows = recs.map(({ t, e }) => {
+        const key = `${t.id}|${e.at}|${e.kind}`;
+        const when = new Date(e.at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        const what = e.kind === "budget"
+          ? `Budget ${money(e.from)} → ${money(e.to)} (${e.amount > 0 ? "+" : "−"}${money(Math.abs(e.amount || 0))})`
+          : `Dates ${rangeTxt(e.from.start, e.from.end)} → ${rangeTxt(e.to.start, e.to.end)} (${plural(e.days || 0, "day")})`;
+        const row = h("div", { class: "rec" });
+        const summary = h("div", { class: "rec-main" },
+          h("div", { class: "rec-top" }, h("b", { text: t.title || "Untitled work" }), h("span", { class: "hint", text: `${when} · by ${personName(e.by)}` })),
+          h("div", { text: what }),
+          h("div", { class: "rec-tags" },
+            h("span", { class: "pill " + (e.type === "planned" ? "scheduled" : e.type === "delay" || e.type === "overrun" ? "delayed" : "progress"), text: CHANGE_TYPE[e.type] || e.type || "Unknown" }),
+            tiedName(e).map(x => h("span", { class: "chip", text: x }))),
+          e.reason ? h("div", { class: "hint", text: "Reason: " + e.reason }) : null,
+          e.editedBy ? h("div", { class: "hint", text: `Corrected by ${personName(e.editedBy)}` }) : null);
+        if (!S.canWrite || !S.db) { row.append(summary); return row; }
+        if (editing === key) {
+          const typeOpts = e.kind === "budget" ? [["overrun", CHANGE_TYPE.overrun], ["savings", CHANGE_TYPE.savings], ["planned", "Planned change", "Not counted in the stats"]]
+            : [["delay", CHANGE_TYPE.delay], ["early", CHANGE_TYPE.early], ["planned", "Planned change", "Not counted in the stats"]];
+          const tyG = radioGroup("rc-type", typeOpts, e.type);
+          const tiG = checkGroup("rc-tied", tiedOptions({ coord: e.coordinator, lead: e.lead, squad: e.squadLeader, subs: e.subs || [], showSub: t.crew === "sub" || isInsp(t) || tiedList(e).includes("sub") }), tiedList(e));
+          const tiW = h("div", { class: "field" }, h("span", { class: "lbl", text: "Tied to (choose all that apply)" }), tiG);
+          tiW.hidden = e.type === "planned";
+          tyG.addEventListener("change", () => { tiW.hidden = tyG.val() === "planned"; });
+          const rs = h("textarea", { id: "rc-reason", rows: "2", value: e.reason || "" });
+          const err = h("div", { class: "err", role: "alert" });
+          const save = h("button", { class: "btn primary", type: "button" }, "Save correction");
+          save.addEventListener("click", async () => {
+            const ty = tyG.val(), ti = tiG.vals();
+            if (ty !== "planned" && !ti.length) { err.textContent = "Check at least one option under Tied to."; return; }
+            if (ti.length === 1 && ti[0] === "disputed") { err.textContent = "Disputed needs the people involved checked too."; return; }
+            save.disabled = true;
+            const ok = await saveHistory(t, hist => {
+              const i = hist.findIndex(x => sameEntry(x, e)); if (i < 0) return null;
+              hist[i] = Object.assign({}, hist[i], { type: ty, tiedTo: ty === "planned" ? [] : ti, reason: rs.value.trim(), editedBy: S.me || "Someone", editedAt: new Date().toISOString() });
+              return { history: hist };
+            }, "Record corrected");
+            if (ok) { editing = null; draw(); } else save.disabled = false;
+          });
+          row.classList.add("open");
+          row.append(h("div", { class: "rec-main" }, h("b", { text: t.title || "Untitled work" }), h("div", { text: what }),
+            h("div", { class: "field" }, h("span", { class: "lbl", text: "What kind of change?" }), tyG), tiW, field("Reason", rs, "rc-reason"), err,
+            h("div", { class: "proj-actions" }, save, h("button", { class: "btn", type: "button", onclick: () => { editing = null; draw(); } }, "Cancel"))));
+          return row;
+        }
+        const acts = h("div", { class: "rec-acts" });
+        const normal = () => acts.replaceChildren(
+          h("button", { class: "btn", type: "button", onclick: () => { editing = key; draw(); } }, "Fix"),
+          h("button", { class: "btn danger", type: "button", onclick: confirmDel }, "Delete"));
+        const confirmDel = () => acts.replaceChildren(
+          h("span", { class: "hint", text: "Delete this record from the stats?" }),
+          h("button", { class: "btn danger solid", type: "button", onclick: () => saveHistory(t, (hist, cur) => {
+            const i = hist.findIndex(x => sameEntry(x, e)); if (i < 0) return null;
+            const [gone] = hist.splice(i, 1);
+            const removed = (Array.isArray(cur.historyRemoved) ? cur.historyRemoved : []).concat([Object.assign({}, gone, { removedBy: S.me || "Someone", removedAt: new Date().toISOString() })]);
+            return { history: hist, historyRemoved: removed };
+          }, "Record deleted") }, "Yes, delete"),
+          h("button", { class: "btn", type: "button", onclick: normal }, "Keep"));
+        normal();
+        row.append(summary, acts);
+        return row;
+      });
+      const removedCount = [...S.tasks.values()].filter(t => t.id === job).reduce((n, t) => n + (Array.isArray(t.historyRemoved) ? t.historyRemoved.length : 0), 0);
+      openSheet("Clear job statistics", h("div", { class: "sheet-b" },
+        h("p", { class: "hint", text: "Pick a job to see every schedule or budget change saved for it. Fix a record that was entered wrong, or delete it so it no longer counts in Stats." }),
+        S.projects.size ? h("div", { class: "controls" }, projSel, jobList.length ? jobSel : null) : null,
+        !jobList.length ? h("div", { class: "hint", text: "No jobs in this project have change records yet." })
+          : rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "This job has no change records left." }),
+        removedCount ? h("div", { class: "hint", text: `${plural(removedCount, "record")} deleted from this job so far. Deleted records are kept with each job for reference but don't count in Stats.` }) : null),
+        h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: openStats }, "Back to Stats")), draw);
+    };
+    draw();
+  }
+
+  // ---------- stats ----------
+  function openStats() {
+    let proj = S.project, period = "all";
+    const draw = () => {
+      const today = todayIso();
+      const since = period === "90" ? iso(addDays(new Date(), -90)) : period === "365" ? iso(addDays(new Date(), -365)) : period === "year" ? `${new Date().getFullYear()}-01-01` : "";
+      const inP = d => !since || (d && d >= since);
+      const allItems = [...S.tasks.values()].filter(t => validDate(t.start) && coordMatch(t) && (proj === "all" || t.projectId === proj));
+      const jobs = allItems.filter(t => !isInsp(t));
+      const entries = allItems.flatMap(t => (Array.isArray(t.history) ? t.history : []).map(e => Object.assign({ t }, e))).filter(e => e && e.at && inP(e.at.slice(0, 10)));
+      const people = e => {
+        const out = [];
+        for (const r of tiedList(e)) {
+          if (r === "coordinator") out.push([e.coordinator || "Unnamed", "Coordinator"]);
+          else if (r === "lead") out.push([e.lead || "Unnamed", "Lead"]);
+          else if (r === "squad") out.push([e.squadLeader || "Unnamed", "Squadron leader"]);
+          else if (r === "sub") (Array.isArray(e.subs) && e.subs.length ? e.subs : ["Unnamed"]).forEach(n => out.push([n, "Subcontractor"]));
+          else if (r === "disputed") out.push(["Disputed", ""]);
+          else if (r === "external") out.push(["External", ""]);
+        }
+        return out.length ? out : [["Not tied to anyone", ""]];
+      };
+      const tbl = (head, rows, empty) => rows.length
+        ? h("div", null, h("div", { class: "tscroll" }, h("table", { class: "stbl" }, h("thead", null, h("tr", null, head.map((x, i) => h("th", { class: i ? "n" : "", text: x })))),
+            h("tbody", null, rows.map(r => h("tr", null, r.map((x, i) => h("td", { class: i ? "n" : "", text: x }))))))))
+        : h("div", { class: "hint", text: empty });
+      const tile = (k, v, s, cls) => h("div", { class: "stat" + (cls ? " " + cls : "") }, h("span", { class: "k", text: k }), h("span", { class: "v", text: v }), h("span", { class: "s", text: s }));
+      const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+      const med = a => { if (!a.length) return null; const b = a.slice().sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+      const r1 = n => n == null ? "–" : (Math.round(n * 10) / 10).toString();
+      const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+      const roleKey = (n, r) => r ? `${n} (${r.toLowerCase()})` : n;
+
+      // schedule changes
+      const dE = entries.filter(e => e.kind === "dates");
+      const delays = dE.filter(e => e.type === "delay"), earlies = dE.filter(e => e.type === "early"), planned = dE.filter(e => e.type === "planned");
+      const sum = (a, f) => a.reduce((x, e) => x + (Number(f(e)) || 0), 0);
+      const byP = {};
+      for (const e of [...delays, ...earlies]) for (const [n, r] of people(e)) {
+        const k = roleKey(n, r); const o = byP[k] || (byP[k] = { d: 0, dd: 0, e: 0, ed: 0 });
+        if (e.type === "delay") { o.d++; o.dd += e.days || 0; } else { o.e++; o.ed += e.days || 0; }
+      }
+      const schedRows = Object.entries(byP).sort((a, b) => (b[1].d + b[1].e) - (a[1].d + a[1].e)).map(([k, o]) => [k, String(o.d), String(o.dd), String(o.e), String(o.ed)]);
+
+      // planning vision
+      const started = jobs.filter(t => t.start <= today && inP(t.start));
+      const setOn = t => validDate(t.datesSetAt) ? t.datesSetAt : (t.createdAt || "").slice(0, 10) || t.start;
+      const notice = t => Math.max(0, dayDiff(parse(setOn(t)), parse(t.start)));
+      const unexpected = t => (t.history || []).some(e => e.kind === "dates" && (e.type === "delay" || e.type === "early"));
+      const nArr = started.map(notice);
+      const stable = started.filter(t => !unexpected(t));
+      const visP = {};
+      for (const t of started) {
+        for (const [n, r] of [[jobCoord(t), "Coordinator"], [jobLead(t), "Lead"], [(t.squadLeader || "").trim(), "Squadron leader"]]) {
+          if (!n) continue;
+          const k = roleKey(n, r); const o = visP[k] || (visP[k] = { n: [], s: 0 });
+          o.n.push(notice(t)); if (!unexpected(t)) o.s++;
+        }
+      }
+      const visRows = Object.entries(visP).sort((a, b) => avg(b[1].n) - avg(a[1].n)).map(([k, o]) => [k, String(o.n.length), r1(avg(o.n)), pct(o.s, o.n.length)]);
+
+      // budget
+      const costed = jobs.filter(t => numOrNull(t.budget) != null && numOrNull(t.actualCost) != null && inP(t.start));
+      const tb = sum(costed, t => t.budget), ta = sum(costed, t => t.actualCost);
+      const byCat = {};
+      for (const t of costed) { const k = (TRADE[t.trade] || TRADE.other).label; const o = byCat[k] || (byCat[k] = { b: 0, a: 0, n: 0 }); o.b += Number(t.budget); o.a += Number(t.actualCost); o.n++; }
+      const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "") + money(Math.abs(n));
+      const catRows = Object.entries(byCat).sort((a, b) => (b[1].a - b[1].b) - (a[1].a - a[1].b)).map(([k, o]) => [k, String(o.n), money(o.b), money(o.a), signed(o.a - o.b), o.b ? (o.a >= o.b ? "+" : "") + Math.round((o.a - o.b) / o.b * 100) + "%" : "–"]);
+      const bE = entries.filter(e => e.kind === "budget");
+      const over = bE.filter(e => e.type === "overrun"), save = bE.filter(e => e.type === "savings");
+      const bP = {};
+      for (const e of [...over, ...save]) for (const [n, r] of people(e)) {
+        const k = roleKey(n, r); const o = bP[k] || (bP[k] = { o: 0, oa: 0, s: 0, sa: 0 });
+        if (e.type === "overrun") { o.o++; o.oa += Math.abs(e.amount || 0); } else { o.s++; o.sa += Math.abs(e.amount || 0); }
+      }
+      const bRows = Object.entries(bP).map(([k, o]) => [k, String(o.o), money(o.oa), String(o.s), money(o.sa)]);
+      const bStarted = started.filter(t => numOrNull(t.budget) != null);
+      const bSetOn = t => validDate(t.budgetSetAt) ? t.budgetSetAt : (t.createdAt || "").slice(0, 10) || t.start;
+      const bNotice = bStarted.map(t => Math.max(0, dayDiff(parse(bSetOn(t)), parse(t.start))));
+
+      const projSel = h("select", { class: "select", id: "st-proj", "aria-label": "Project" }, h("option", { value: "all", text: S.coord === "all" ? "All projects" : `All of ${S.coord === "__none" ? "the unassigned" : S.coord + "'s"} projects` }), sortedProjects().filter(p => coordMatchProj(p.id)).map(p => h("option", { value: p.id, text: p.name || "Untitled project" })));
+      projSel.value = S.projects.has(proj) ? proj : "all";
+      projSel.addEventListener("change", () => { proj = projSel.value; draw(); });
+      const perSel = h("select", { class: "select", id: "st-period", "aria-label": "Period" }, [["all", "All time"], ["90", "Last 90 days"], ["365", "Last 12 months"], ["year", "This year"]].map(([v, l]) => h("option", { value: v, text: l })));
+      perSel.value = period;
+      perSel.addEventListener("change", () => { period = perSel.value; draw(); });
+      const noNames = proj !== "all" && S.projects.get(proj) && !(S.projects.get(proj).coordinator && S.projects.get(proj).lead);
+
+      const body = h("div", { class: "sheet-b" },
+        h("div", { class: "controls" }, projSel, perSel),
+        noNames ? h("div", { class: "banner", text: "This project is missing a coordinator or lead name. Add them in Projects (new jobs fill in from there) or on each job so changes are credited to the right person." }) : null,
+
+        h("h3", { class: "sth", text: "Schedule changes" }),
+        h("div", { class: "stats" },
+          tile("Unexpected delays", String(delays.length), plural(sum(delays, e => e.days), "day") + " total", delays.length ? "alert" : ""),
+          tile("Unexpected early starts", String(earlies.length), plural(sum(earlies, e => e.days), "day") + " total", earlies.length ? "warnish" : ""),
+          tile("Planned changes", String(planned.length), "Not counted against anyone")),
+        tbl(["Tied to", "Delays", "Delay days", "Early starts", "Early days"], schedRows, "No unexpected date changes in this period."),
+
+        h("h3", { class: "sth", text: "Planning vision" }),
+        h("p", { class: "hint", text: "Days of notice is how many days before a job started its dates were set and then left alone. Higher is better: it means the plan held." }),
+        h("div", { class: "stats" },
+          tile("Average days of notice", r1(avg(nArr)), `${plural(started.length, "job")} started`),
+          tile("Median days of notice", r1(med(nArr)), "Half of jobs had more"),
+          tile("Jobs with no surprise", pct(stable.length, started.length), `${stable.length} of ${started.length} had no unexpected date change`, started.length && stable.length / started.length < .7 ? "warnish" : "")),
+        tbl(["Person", "Jobs", "Avg days of notice", "No surprise"], visRows, "Add coordinator and lead names in Projects to see this by person."),
+
+        h("h3", { class: "sth", text: "Budget" }),
+        h("div", { class: "stats" },
+          tile("Budgeted (jobs with actual cost)", money(tb), plural(costed.length, "job")),
+          tile("Actual cost", money(ta), costed.length ? `${signed(ta - tb)} vs budget` : "Enter actual cost on finished jobs", ta > tb ? "alert" : ""),
+          tile("Budget set ahead", r1(avg(bNotice)), "Average days before the job started")),
+        tbl(["Category", "Jobs", "Budget", "Actual", "Over / under", "%"], catRows, "No jobs have both a budget and an actual cost yet."),
+        h("div", { class: "stats" },
+          tile("Unexpected cost increases", String(over.length), money(sum(over, e => Math.abs(e.amount))) + " added", over.length ? "alert" : ""),
+          tile("Unexpected savings", String(save.length), money(sum(save, e => Math.abs(e.amount))) + " saved")),
+        tbl(["Tied to", "Increases", "Amount", "Savings", "Amount"], bRows, "No unexpected budget changes in this period."));
+      const foot = (S.canWrite && S.db) ? h("div", { class: "sheet-f" },
+        h("button", { class: "btn", type: "button", onclick: () => openRecords(proj !== "all" ? proj : S.project) }, "Clear a job's statistics")) : null;
+      openSheet("Stats", body, foot, draw, true);
+    };
+    draw();
+  }
+
+  // ---------- task form ----------
+  function field(label, control, id) { return h("div", { class: "field" }, h("label", { for: id, text: label }), control); }
+  function sel(id, opts, value, extra) {
+    const s = h("select", Object.assign({ id }, extra || {}));
+    for (const [v, l] of opts) s.append(h("option", { value: v, text: l, selected: v === value }));
+    return s;
+  }
+
+  async function openTaskForm(t, defaults) {
+    const editing = !!t;
+    const ro = !S.canWrite || !S.db;
+    // Locked devices may still fill in materials, tour, class, architect questions and media on an existing job (add and edit, never delete).
+    const lim = ro && !!S.db && !!S.uid && editing && t.trade !== "inspection";
+    const roS = ro && !lim;
+    const d = Object.assign({
+      projectId: S.project !== "all" ? S.project : (sortedProjects()[0] || {}).id || "__new",
+      title: "", trade: S.trade !== "all" && S.trade !== "inspection" ? S.trade : "framing", crew: "inhouse", assignee: "",
+      start: todayIso(), end: "", budget: "", materials: "", notes: "", workOrder: false, status: "scheduled",
+      obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
+      matStatus: "", matDate: "", inspResult: "pending", dependsOn: [],
+      tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: "",
+      archQ: false, archText: "", archA: "", archAnsweredAt: ""
+    }, defaults || {}, t || {});
+    if (!S.projects.size) d.projectId = "__new";
+
+    const projOpts = sortedProjects().map(p => [p.id, p.name || "Untitled project"]);
+    if (!ro) projOpts.push(["__new", "+ New project…"]);
+    const projSel = sel("f-proj", projOpts, d.projectId, { disabled: ro });
+    const newName = h("input", { type: "text", id: "f-np-name", placeholder: "e.g. 1838 Westwood Ave", autocomplete: "off" });
+    const newAddr = h("input", { type: "text", id: "f-np-addr", placeholder: "Address or notes (optional)", autocomplete: "off" });
+    const newBox = h("div", { class: "newproj" }, field("New project name", newName, "f-np-name"), field("Address", newAddr, "f-np-addr"));
+    newBox.hidden = d.projectId !== "__new";
+    projSel.addEventListener("change", () => {
+      newBox.hidden = projSel.value !== "__new"; if (!newBox.hidden) newName.focus();
+      const was = projDef(lastProj), now = projDef(projSel.value);
+      if (!coordIn.value.trim() || coordIn.value.trim() === (was.coordinator || "")) coordIn.value = now.coordinator || "";
+      if (!leadIn.value.trim() || leadIn.value.trim() === (was.lead || "")) leadIn.value = now.lead || "";
+      lastProj = projSel.value;
+    });
+
+    const title = h("textarea", { id: "f-title", rows: "2", placeholder: "What needs to be done (e.g. Frame second-floor bathroom wall)", value: d.title, disabled: ro });
+    const inspForm = d.trade === "inspection";
+    const trade = sel("f-trd", inspForm ? [["inspection", "Inspection"]] : TRADES.filter(([k]) => k !== "inspection").map(([k, l]) => [k, l]), d.trade, { disabled: ro });
+    const tradeCell = field("Category", trade, "f-trd");
+    tradeCell.hidden = inspForm;
+    const crewSeg = h("div", { class: "radio-seg", role: "radiogroup", "aria-label": "In-house or sub" },
+      ...[["inhouse", "In-house"], ["sub", "Sub"]].map(([v, l]) => h("label", null,
+        h("input", { type: "radio", name: "crew", value: v, checked: d.crew === v, disabled: ro }), h("span", { text: l }))));
+    namesList();
+    const projDef = id => S.projects.get(id) || {};
+    const coordIn = h("input", { type: "text", id: "f-coord", list: "names-dl", placeholder: "Manages the calendar", value: t ? jobCoord(d) : (projDef(d.projectId).coordinator || ""), disabled: ro, autocomplete: "off" });
+    const leadIn = h("input", { type: "text", id: "f-lead", list: "names-dl", placeholder: "Runs the job on site", value: t ? jobLead(d) : (projDef(d.projectId).lead || ""), disabled: ro, autocomplete: "off" });
+    const squadIn = h("input", { type: "text", id: "f-squad", list: "names-dl", placeholder: "Leads the crew on this job", value: d.squadLeader || "", disabled: ro, autocomplete: "off" });
+    const workersIn = chipInput("f-workers", workersOf(d), ro, "Type a name, press Enter");
+    const subsIn = chipInput("f-subs", subsOf(d), ro, "Company or name, press Enter", "subs-dl");
+    const subField = h("div", { class: "field" }, h("label", { for: "f-subs", text: "Subcontractor" }), subsIn, h("span", { class: "hint", text: "Subcontractors you've used before show up as suggestions." }));
+    let lastProj = d.projectId;
+    const start = h("input", { type: "date", id: "f-start", value: d.start, disabled: ro });
+    const end = h("input", { type: "date", id: "f-end", value: d.end || "", disabled: ro });
+    const actual = h("input", { type: "text", id: "f-actual", inputmode: "decimal", placeholder: "Fill in when done", value: d.actualCost == null || d.actualCost === "" ? "" : String(d.actualCost), disabled: ro, autocomplete: "off" });
+    const budget = h("input", { type: "text", id: "f-budget", inputmode: "decimal", placeholder: "0", value: d.budget === "" || d.budget == null ? "" : String(d.budget), disabled: ro, autocomplete: "off" });
+    const status = sel("f-status", STATUSES, d.status, { disabled: ro });
+    let mseq = 0;
+    const mrows = h("div", { class: "mrows" });
+    const addMat = (m, focus) => {
+      const k = mseq++;
+      const nm = h("input", { type: "text", class: "mn", id: `m-name-${k}`, placeholder: "Material (e.g. 2x4x8 studs)", value: m.name || "", disabled: roS, autocomplete: "off", "aria-label": "Material" });
+      const qt = h("input", { type: "text", class: "mq", id: `m-qty-${k}`, placeholder: "Qty", value: m.qty || "", disabled: roS, autocomplete: "off", "aria-label": "Quantity" });
+      const st = sel(`m-st-${k}`, LINE_ST, m.status || "needed", { disabled: roS, class: "ms-sel", "aria-label": "Status" });
+      const dt = h("input", { type: "date", class: "md", id: `m-date-${k}`, value: m.date || "", disabled: roS, "aria-label": "Expected delivery", title: "Expected delivery" });
+      const row = h("div", { class: "mrow" }, nm, qt, st, dt,
+        (roS || (lim && m.name)) ? h("span") : h("button", { type: "button", class: "x", "aria-label": "Remove material", title: "Remove", onclick: () => { row.remove(); } }, "×"));
+      row.read = () => {
+        const name = nm.value.trim(); if (!name) return null;
+        let status = st.value; if (dt.value && status === "needed" && !m.status) status = "ordered";
+        return { name, qty: qt.value.trim(), status, date: dt.value || "" };
+      };
+      mrows.append(row);
+      if (focus) nm.focus();
+    };
+    const startMats = matList(d);
+    startMats.forEach(m => addMat(m));
+    if (!startMats.length && !roS) addMat({});
+    const matField = h("div", { class: "field mat-box" }, h("span", { class: "lbl", text: "Materials" }),
+      h("div", { class: "mhead" }, h("span", { text: "Material" }), h("span", { text: "Qty" }), h("span", { text: "Status" }), h("span", { text: "Expected delivery" }), h("span")),
+      mrows,
+      roS ? (startMats.length ? null : h("span", { class: "hint", text: "No materials listed." }))
+         : h("button", { type: "button", class: "btn madd", onclick: () => addMat({}, true) }, "+ Add material"));
+    const notes = h("textarea", { id: "f-notes", rows: "3", placeholder: "Access, inspections, who to call, anything the crew should know", value: d.notes || "", disabled: ro });
+    const wo = h("input", { type: "checkbox", id: "f-wo", checked: !!d.workOrder, disabled: ro });
+    const obsTour = h("input", { type: "checkbox", id: "f-tour", checked: !!d.obsTour, disabled: roS || (lim && !!d.obsTour) });
+    const obsReq = h("input", { type: "checkbox", id: "f-req", checked: !!d.obsRequity, disabled: roS || (lim && !!d.obsRequity) });
+    const media = h("input", { type: "checkbox", id: "f-media", checked: !!d.media, disabled: roS || (lim && !!d.media) });
+    const mediaWhat = h("textarea", { id: "f-media-what", rows: "2", placeholder: "What to capture (e.g. before/after photos of the sill plate, 30-second clip of flashing install)", value: d.mediaWhat || "", disabled: roS });
+    const mediaLink = h("input", { type: "text", id: "f-media-link", inputmode: "url", placeholder: "Paste the Google Drive link", value: d.mediaLink || "", disabled: roS, autocomplete: "off" });
+    const openLink = h("a", { target: "_blank", rel: "noopener noreferrer", class: "hint", text: "Open the link" });
+    const syncLink = () => { const ok = isLink(mediaLink.value); openLink.hidden = !ok; if (ok) openLink.href = mediaLink.value.trim(); };
+    mediaLink.addEventListener("input", syncLink); syncLink();
+    const mediaBox = h("div", { class: "media-box" }, field("What to capture", mediaWhat, "f-media-what"),
+      h("div", { class: "field" }, h("label", { for: "f-media-link", text: "Media link" }), mediaLink, h("span", { class: "hint", text: "Add the shared Drive folder or file link once the media is uploaded." }), openLink));
+    mediaBox.hidden = !d.media;
+    media.addEventListener("change", () => { mediaBox.hidden = !media.checked; if (media.checked) mediaWhat.focus(); });
+    // inspection
+    const inspRes = sel("f-insp", INSPS, d.inspResult || "pending", { disabled: ro });
+    const inspBox = field("Inspection result", inspRes, "f-insp");
+    const inspType = sel("f-insp-type", INSP_TYPES, d.inspType || "framing", { disabled: ro });
+    const inspTypeCell = field("Inspection type", inspType, "f-insp-type");
+    const crewCell = h("div", { class: "field" }, h("span", { class: "lbl", text: "Who does it" }), crewSeg);
+    const startLbl = h("label", { for: "f-start", text: "Start date" });
+    const endCell = h("div", { class: "field" }, h("label", { for: "f-end", text: "Deadline" }), end, h("span", { class: "hint", text: "Leave blank for one-day work" }));
+    const workOnly = [];
+    const syncInsp = () => {
+      const ins = trade.value === "inspection";
+      inspBox.hidden = !ins; inspTypeCell.hidden = !ins;
+      startLbl.textContent = ins ? "Inspection date" : "Start date";
+      for (const el of workOnly) el.hidden = ins;
+      syncSub();
+    };
+    const syncSub = () => {
+      const crewV = (crewSeg.querySelector('input[name="crew"]:checked') || {}).value;
+      subField.hidden = !(trade.value === "inspection" || crewV === "sub");
+    };
+    crewSeg.addEventListener("change", syncSub);
+    // waiting on
+    let deps = Array.isArray(d.dependsOn) ? d.dependsOn.slice() : [];
+    const depList = h("div", { class: "deps" });
+    const depSel = h("select", { id: "f-dep", disabled: ro });
+    const drawDeps = () => {
+      const pid = projSel.value;
+      depList.replaceChildren(...deps.map(id => {
+        const x = S.tasks.get(id); if (!x) return null;
+        return h("span", { class: "dep " + (satisfied(x) ? "ok" : "wait") },
+          `${(TRADE[x.trade] || TRADE.other).code} · ${x.title || "Untitled"} · ${depState(x)}`,
+          ro ? null : h("button", { type: "button", class: "x", "aria-label": "Remove", onclick: () => { deps = deps.filter(i => i !== id); drawDeps(); } }, "×"));
+      }));
+      const opts = [...S.tasks.values()].filter(x => x.projectId === pid && (!t || x.id !== t.id) && !deps.includes(x.id) && validDate(x.start)).sort((a, b) => a.start.localeCompare(b.start));
+      depSel.replaceChildren(h("option", { value: "", text: opts.length ? "+ Add work or inspection this waits on…" : "No other items in this project yet" }),
+        ...opts.map(x => h("option", { value: x.id, text: `${fmtShort(x.start)} · ${(TRADE[x.trade] || TRADE.other).code} · ${x.title || "Untitled"}` })));
+      depSel.disabled = ro || !opts.length;
+    };
+    depSel.addEventListener("change", () => { if (depSel.value) { deps.push(depSel.value); drawDeps(); } });
+    projSel.addEventListener("change", () => { deps = []; drawDeps(); });
+    // visits
+    const visitBox = (key, lbl, cb, whoPh) => {
+      const dt = h("input", { type: "date", id: `f-${key}-date`, value: validDate(d[key + "Date"]) ? d[key + "Date"] : (d.start || ""), disabled: roS });
+      const tm = h("input", { type: "time", id: `f-${key}-time`, value: d[key + "Time"] || "", disabled: roS });
+      const who = h("input", { type: "text", id: `f-${key}-who`, placeholder: whoPh, value: d[key + "Who"] || "", disabled: roS, autocomplete: "off" });
+      const n = h("input", { type: "text", id: `f-${key}-count`, inputmode: "numeric", placeholder: "0", value: d[key + "Count"] ?? "", disabled: roS, autocomplete: "off" });
+      const cm = h("textarea", { id: `f-${key}-notes`, rows: "2", placeholder: key === "tour" ? "e.g. Show the air sealing details; park on the street" : "e.g. Instructor wants students on the repointing; bring safety glasses", value: d[key + "Notes"] || "", disabled: roS });
+      const box = h("div", { class: "visit-box v-" + key }, h("span", { class: "lbl", text: lbl + " visit" }),
+        h("div", { class: "row2" }, field("Date", dt, `f-${key}-date`), field("Time", tm, `f-${key}-time`)),
+        h("div", { class: "row2", style: "grid-template-columns: minmax(0, 3fr) minmax(0, 1fr)" }, field("Who's coming", who, `f-${key}-who`), field("Headcount", n, `f-${key}-count`)),
+        field("Comments", cm, `f-${key}-notes`));
+      box.hidden = !cb.checked;
+      cb.addEventListener("change", () => { box.hidden = !cb.checked; if (cb.checked && !dt.value) dt.value = start.value; });
+      box.read = () => ({ notes: cm.value.trim(), date: dt.value, time: tm.value, who: who.value.trim(), count: n.value.trim() });
+      box.countEl = n;
+      return box;
+    };
+    const tourBox = visitBox("tour", "Tour", obsTour, "e.g. City Council staff, URA");
+    const reqBox = visitBox("req", "Class", obsReq, "e.g. Requity carpentry cohort");
+    const woRow = h("label", { class: "check-row", for: "f-wo" }, wo, "Work order has been created");
+    const archCb = h("input", { type: "checkbox", id: "f-arch", checked: !!d.archQ, disabled: roS || (lim && !!d.archQ) });
+    const archRows = h("div", { class: "arch-list" });
+    let archSeq = 0;
+    const addArch = (x, focus) => {
+      const k = archSeq++;
+      const q = h("textarea", { id: `f-arch-q-${k}`, rows: "2", placeholder: "What do you need the architect to clarify? (e.g. Header size over the new kitchen opening?)", value: x.q || "", disabled: roS });
+      const a = h("textarea", { id: `f-arch-a-${k}`, rows: "2", placeholder: "Paste or type the architect's answer when it comes back", value: x.a || "", disabled: roS });
+      const st = h("span", { class: "arch-state" });
+      const num = h("span", { class: "arch-num" });
+      const sync = () => {
+        const ans = a.value.trim();
+        st.className = "arch-state " + (ans ? "ok" : "open");
+        st.textContent = ans ? ("Answered" + (x.answeredAt && (x.a || "").trim() ? " on " + fmtShort(x.answeredAt) : "")) : "Open, waiting on the architect";
+      };
+      a.addEventListener("input", sync); sync();
+      const row = h("div", { class: "arch-item" },
+        h("div", { class: "arch-head" }, num, st, (roS || (lim && (x.q || "").trim())) ? null : h("button", { type: "button", class: "btn arch-del", onclick: () => { row.remove(); renumber(); } }, "Remove")),
+        field("Question", q, `f-arch-q-${k}`), field("Architect's answer", a, `f-arch-a-${k}`));
+      row.read = () => {
+        const qq = q.value.trim(), aa = a.value.trim();
+        if (!qq) return null;
+        return { q: qq, a: aa, answeredAt: aa ? ((x.a || "").trim() ? (x.answeredAt || todayIso()) : todayIso()) : "" };
+      };
+      row.qEl = q;
+      archRows.append(row); renumber();
+      if (focus) q.focus();
+    };
+    const renumber = () => [...archRows.children].forEach((r, i, all) => { r.querySelector(".arch-num").textContent = all.length > 1 ? `Question ${i + 1}` : "Question"; });
+    archList(d).forEach(x => addArch(x));
+    if (!archRows.children.length && !roS) addArch({});
+    const archBox = h("div", { class: "arch-box" }, archRows,
+      roS ? null : h("button", { type: "button", class: "btn madd", onclick: () => addArch({}, true) }, "+ Add another question"));
+    archBox.hidden = !d.archQ;
+    archCb.addEventListener("change", () => {
+      archBox.hidden = !archCb.checked;
+      if (archCb.checked) { if (!archRows.children.length) addArch({}); archRows.querySelector("textarea").focus(); }
+    });
+    const err = h("div", { class: "err", role: "alert" });
+    const meta = h("div", { class: "hint" });
+    const w = el => { workOnly.push(el); return el; };
+    const limName = lim && !S.me ? h("input", { type: "text", id: "f-myname", placeholder: "So the team knows who updated this", autocomplete: "name" }) : null;
+
+    const body = h("div", { class: "sheet-b" },
+      lim ? h("div", { class: "banner info" }, h("span", { text: "Editing is locked on this device. You can still add team notes and files, and add to or update Materials, Tour, Class, Architect questions and Media. Everything else is view-only." })) : null,
+      lim && !S.me ? field("Your name", limName, "f-myname") : null,
+      field("Project", projSel, "f-proj"), newBox,
+      h("div", { class: "row2" }, tradeCell, crewCell, inspTypeCell),
+      w(field("Work to be done", title, "f-title")),
+      w(h("div", { class: "row2" }, field("Project coordinator", coordIn, "f-coord"), field("Project lead", leadIn, "f-lead"))),
+      subField,
+      w(field("Squadron leader", squadIn, "f-squad")),
+      w(h("div", { class: "field" }, h("label", { for: "f-workers", text: "Approved workers" }), workersIn, h("span", { class: "hint", text: "Names you've used before show up as suggestions." }))),
+      h("div", { class: "row2" }, h("div", { class: "field" }, startLbl, start), endCell, inspBox),
+      w(h("div", { class: "row2" }, field("Budget", h("div", { class: "money-in" }, h("span", { text: "$" }), budget), "f-budget"), field("Actual cost", h("div", { class: "money-in" }, h("span", { text: "$" }), actual), "f-actual"))),
+      w(field("Status", status, "f-status")),
+      w(matField),
+      w(h("div", { class: "field" }, h("label", { for: "f-dep", text: "Waiting on (can't start until done)" }), depList, depSel,
+        h("span", { class: "hint", text: "Pick earlier work or an inspection in this project. You'll see a warning until it's done or passed." }))),
+      field("Notes", notes, "f-notes"),
+      editing ? teamSection(t) : h("div", { class: "hint", text: "Save this job first, then anyone can add team notes and attach files." }),
+      w(woRow),
+      w(h("div", { class: "field" }, h("span", { class: "lbl", text: "Observed work (check any that apply)" }),
+        h("div", { class: "checks" },
+          h("label", { class: "check-row plain", for: "f-tour" }, obsTour, "Tour"),
+          h("label", { class: "check-row plain", for: "f-req" }, obsReq, "Class")))),
+      w(h("div", { class: "field" }, tourBox, reqBox)),
+      w(h("label", { class: "check-row plain", for: "f-arch" }, archCb, "Architect question")),
+      w(h("div", { class: "field" }, archBox)),
+      w(h("label", { class: "check-row plain", for: "f-media" }, media, "Media requested")),
+      w(h("div", { class: "field" }, mediaBox)),
+      err, meta);
+    workOnly.push(crewCell, endCell);
+
+    trade.addEventListener("change", syncInsp); syncInsp(); drawDeps();
+    let confirming = false;
+    const dupBtn = editing && !ro ? h("button", { class: "btn", type: "button", onclick: () => {
+      const c = Object.assign({}, S.tasks.get(t.id) || t);
+      for (const k of ["id", "createdBy", "createdAt", "updatedBy", "updatedAt"]) delete c[k];
+      Object.assign(c, { status: "scheduled", workOrder: false, inspResult: "pending", mediaLink: "", dependsOn: [],
+        materialsList: matList(c).map(m => ({ name: m.name, qty: m.qty || "", status: "needed", date: "" })), materials: "", matStatus: "", matDate: "", archQ: false, archQs: [], archText: "", archA: "", archAnsweredAt: "", noteLog: [], attachments: [], actualCost: null, history: [] });
+      openTaskForm(null, c); toast("Copy ready. Change the date or details, then add it.");
+    } }, "Duplicate") : null;
+    const delBtn = editing && !ro ? h("button", { class: "btn danger", type: "button" }, "Delete") : null;
+    const leftBox = h("div", { class: "left" }, delBtn, dupBtn);
+    if (delBtn) delBtn.addEventListener("click", async () => {
+      if (!confirming) {
+        confirming = true;
+        leftBox.replaceChildren(h("span", { class: "hint", text: "Delete this work item?" }),
+          h("button", { class: "btn danger solid", type: "button", onclick: async () => {
+            const ok = await write(() => S.db.doc("tasks/" + t.id).delete(), "Work item deleted");
+            if (ok) closeSheet();
+          } }, "Yes, delete"),
+          h("button", { class: "btn", type: "button", onclick: () => { confirming = false; leftBox.replaceChildren(...[delBtn, dupBtn].filter(Boolean)); } }, "Keep"));
+      }
+    });
+    const saveBtn = ro ? null : h("button", { class: "btn primary", type: "button" }, editing ? "Save changes" : "Add to schedule");
+    const limBtn = lim ? h("button", { class: "btn primary", type: "button" }, "Save updates") : null;
+    const foot = h("div", { class: "sheet-f" }, leftBox, h("button", { class: "btn", type: "button", onclick: closeSheet }, ro && !lim ? "Close" : "Cancel"), saveBtn, limBtn);
+    if (limBtn) limBtn.addEventListener("click", async () => {
+      err.textContent = "";
+      if (limName) {
+        const n = limName.value.trim();
+        if (!n) { err.textContent = "Enter your name before saving."; limName.focus(); return; }
+        S.me = n; store("name", n);
+      }
+      const ml = mediaLink.value.trim();
+      if (media.checked && ml && !isLink(ml)) { err.textContent = "The media link should be a full web address starting with https://, like a Google Drive share link."; mediaLink.focus(); return; }
+      const tv = tourBox.read(), rv = reqBox.read();
+      for (const [v, box, lbl] of [[tv, tourBox, "Tour"], [rv, reqBox, "Class"]]) {
+        if (!box.hidden && v.count !== "" && !/^\d+$/.test(v.count)) { err.textContent = `${lbl} headcount should be a whole number.`; box.countEl.focus(); return; }
+      }
+      const cur = S.tasks.get(t.id) || t;
+      const mats = [...mrows.children].map(r => r.read && r.read()).filter(Boolean);
+      const qs = archCb.checked ? [...archRows.children].map(r => r.read()).filter(Boolean) : [];
+      if (archCb.checked && !qs.length) { err.textContent = "Write at least one question for the architect, or uncheck Architect question."; const f = archRows.querySelector("textarea"); if (f) f.focus(); return; }
+      if (mats.length < matList(cur).length) { err.textContent = "Material lines can't be cleared while editing is locked. Put the name back, or unlock editing to remove a line."; return; }
+      if (qs.length < archList(cur).length) { err.textContent = "Architect questions can't be cleared while editing is locked. Put the question back, or unlock editing to remove it."; return; }
+      const upd = {
+        materialsList: mats, materials: "",
+        obsTour: obsTour.checked, obsRequity: obsReq.checked, media: media.checked,
+        archQ: archCb.checked && qs.length > 0, archQs: qs, archText: "", archA: "", archAnsweredAt: "",
+        mediaWhat: media.checked ? mediaWhat.value.trim() : "", mediaLink: media.checked ? ml : "",
+        ...stamp()
+      };
+      if (obsTour.checked) Object.assign(upd, { tourDate: tv.date || cur.start, tourTime: tv.time, tourWho: tv.who, tourCount: tv.count !== "" ? Number(tv.count) : "", tourNotes: tv.notes });
+      if (obsReq.checked) Object.assign(upd, { reqDate: rv.date || cur.start, reqTime: rv.time, reqWho: rv.who, reqCount: rv.count !== "" ? Number(rv.count) : "", reqNotes: rv.notes });
+      limBtn.disabled = true;
+      try {
+        await S.db.doc("tasks/" + t.id).update(upd);
+        toast("Updates saved"); closeSheet();
+      } catch (e) {
+        limBtn.disabled = false;
+        err.textContent = e && e.code === "permission-denied"
+          ? "This update wasn't allowed. The schedule's security rules may need updating; ask the project coordinator."
+          : "Couldn't save. Check your connection and try again.";
+      }
+    });
+
+    if (saveBtn) saveBtn.addEventListener("click", async () => {
+      err.textContent = "";
+      const ins = trade.value === "inspection";
+      const ttl = ins ? `${INSP_TYPE[inspType.value] || "Inspection"} inspection` : title.value.trim();
+      if (!ttl) { err.textContent = "Describe the work to be done."; title.focus(); return; }
+      if (!start.value) { err.textContent = ins ? "Pick the inspection date." : "Pick a start date."; start.focus(); return; }
+      if (!ins && end.value && end.value < start.value) { err.textContent = "The deadline is before the start date. Move it to the start date or later."; end.focus(); return; }
+      let b = budget.value.replace(/[$,\s]/g, "");
+      if (b !== "" && !/^\d+(\.\d{1,2})?$/.test(b)) { err.textContent = "Enter the budget as a dollar amount, like 2500 or 2500.50."; budget.focus(); return; }
+      const ac = actual.value.replace(/[$,\s]/g, "");
+      if (ac !== "" && !/^\d+(\.\d{1,2})?$/.test(ac)) { err.textContent = "Enter the actual cost as a dollar amount, like 2500 or 2500.50."; actual.focus(); return; }
+      const ml = mediaLink.value.trim();
+      if (media.checked && ml && !isLink(ml)) { err.textContent = "The media link should be a full web address starting with https://, like a Google Drive share link."; mediaLink.focus(); return; }
+      const archQs = archCb.checked ? [...archRows.children].map(r => r.read()).filter(Boolean) : [];
+      if (archCb.checked && !archQs.length) { err.textContent = "Write at least one question for the architect, or uncheck Architect question."; const f = archRows.querySelector("textarea"); if (f) f.focus(); return; }
+      const tv = tourBox.read(), rv = reqBox.read();
+      for (const [v, box, lbl] of [[tv, tourBox, "Tour"], [rv, reqBox, "Class"]]) {
+        if (!box.hidden && v.count !== "" && !/^\d+$/.test(v.count)) { err.textContent = `${lbl} headcount should be a whole number.`; box.countEl.focus(); return; }
+      }
+      let pid = projSel.value;
+      if (pid === "__new") {
+        const nm = newName.value.trim();
+        if (!nm) { err.textContent = "Name the new project, or pick an existing one."; newName.focus(); return; }
+        saveBtn.disabled = true;
+        const ref = S.db.collection("projects").doc();
+        const ok = await write(() => ref.set({ name: nm, address: newAddr.value.trim(), createdBy: S.me || "Someone", createdAt: new Date().toISOString() }));
+        if (!ok) { saveBtn.disabled = false; return; }
+        pid = ref.id;
+      }
+      const data = {
+        projectId: pid, title: ttl, trade: trade.value,
+        crew: (body.querySelector('input[name="crew"]:checked') || {}).value || "inhouse",
+        assignee: "", coordinator: coordIn.value.trim(), lead: leadIn.value.trim(), squadLeader: squadIn.value.trim(), workers: workersIn.read(), subs: subField.hidden ? [] : subsIn.read(), start: start.value, end: end.value || "",
+        budget: b === "" ? null : Number(b), actualCost: ac === "" ? null : Number(ac), materialsList: [...mrows.children].map(r => r.read && r.read()).filter(Boolean), materials: "", notes: notes.value.trim(),
+        workOrder: wo.checked, status: status.value,
+        obsTour: obsTour.checked, obsRequity: obsReq.checked,
+        media: media.checked, mediaWhat: mediaWhat.value.trim(), mediaLink: ml,
+        matStatus: "", matDate: "",
+        inspResult: trade.value === "inspection" ? inspRes.value : "pending",
+        dependsOn: deps.filter(id => S.tasks.has(id)),
+        archQ: archCb.checked && archQs.length > 0, archQs, archText: "", archA: "", archAnsweredAt: "",
+        tourDate: obsTour.checked ? (tv.date || start.value) : "", reqDate: obsReq.checked ? (rv.date || start.value) : "",
+        tourNotes: obsTour.checked ? tv.notes : "", reqNotes: obsReq.checked ? rv.notes : "",
+        tourTime: obsTour.checked ? tv.time : "", tourWho: obsTour.checked ? tv.who : "", tourCount: obsTour.checked && tv.count !== "" ? Number(tv.count) : "",
+        reqTime: obsReq.checked ? rv.time : "", reqWho: obsReq.checked ? rv.who : "", reqCount: obsReq.checked && rv.count !== "" ? Number(rv.count) : "",
+        inspType: ins ? inspType.value : "",
+        ...stamp()
+      };
+      if (ins) Object.assign(data, {
+        crew: "sub", assignee: "", workers: [], squadLeader: "", end: "", budget: null, materialsList: [], workOrder: false, dependsOn: [],
+        status: inspRes.value === "pass" ? "done" : "scheduled",
+        obsTour: false, obsRequity: false, media: false, mediaWhat: "", mediaLink: "",
+        archQ: false, archQs: [], archText: "", archA: "", archAnsweredAt: "",
+        tourTime: "", tourWho: "", tourCount: "", reqTime: "", reqWho: "", reqCount: "", tourDate: "", reqDate: "", tourNotes: "", reqNotes: ""
+      });
+      if (ins) data.actualCost = null;
+      if (editing) {
+        const cur = S.tasks.get(t.id) || t;
+        {
+          const entries = await askChange(Object.assign({}, cur, { subs: data.subs, crew: data.crew, squadLeader: data.squadLeader, coordinator: data.coordinator, lead: data.lead }), { start: data.start, end: data.end, budget: data.budget });
+          if (entries === null) return;
+          data.history = [...(Array.isArray(cur.history) ? cur.history : []), ...entries];
+        }
+        if (cur.start !== data.start || endOf(cur) !== (data.end && data.end >= data.start ? data.end : data.start)) data.datesSetAt = todayIso();
+        if (numOrNull(cur.budget) !== numOrNull(data.budget)) data.budgetSetAt = data.budget == null ? "" : todayIso();
+      } else {
+        data.history = []; data.datesSetAt = todayIso(); data.budgetSetAt = data.budget == null ? "" : todayIso();
+      }
+      saveBtn.disabled = true;
+      let ok;
+      if (editing) {
+        const base = Object.assign({}, S.tasks.get(t.id) || t); delete base.id;
+        ok = await write(() => S.db.doc("tasks/" + t.id).set({ ...base, ...data }), "Changes saved");
+      } else {
+        const ref = S.db.collection("tasks").doc();
+        ok = await write(() => ref.set({ ...data, createdBy: S.me || "Someone", createdAt: new Date().toISOString() }), "Added to the schedule");
+      }
+      if (ok) {
+        if (S.project !== "all" && S.project !== pid) { S.project = pid; store("project", pid); }
+        const sd = parse(data.start); if (sd.getMonth() !== S.cursor.getMonth() || S.view === "week") { S.cursor = sd; }
+        closeSheet(); renderAll();
+      } else saveBtn.disabled = false;
+    });
+
+    const noun = inspForm ? "inspection" : "work";
+    openSheet(editing ? (lim ? "Update work" : ro ? (inspForm ? "Inspection" : "Work item") : "Edit " + noun) : (defaults && defaults.title ? "Duplicate " + noun : "Add " + noun), body, foot, null);
+
+    if (editing && !ro && Array.isArray(t.history) && t.history.length) {
+      meta.after(h("div", { class: "proj-actions" },
+        h("span", { class: "hint", text: `This job has ${plural(t.history.length, "change record")} in Stats.` }),
+        h("button", { class: "btn", type: "button", onclick: () => openRecords(null, t.id) }, "Review or clear")));
+    }
+    if (editing && (t.updatedBy || t.createdBy)) {
+      {
+        const nm = personName;
+        const when = t.updatedAt ? new Date(t.updatedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+        meta.textContent = (t.createdBy ? `Added by ${nm(t.createdBy)}. ` : "") + (t.updatedBy ? `Last updated by ${nm(t.updatedBy)}${when ? " on " + when : ""}.` : "");
+      }
+    }
+  }
+
+  // ---------- saved names ----------
+  const jobCoordRaw = t => (t.coordinator || "").trim();
+  const jobLeadRaw = t => (t.lead || "").trim();
+  // Each group says where its names live on jobs, projects and past change records.
+  const NAME_GROUPS = [
+    { key: "coordinator", label: "Project coordinators", one: "coordinator", job: t => [jobCoordRaw(t)], proj: p => [(p.coordinator || "").trim()], field: "coordinator" },
+    { key: "lead", label: "Project leads", one: "lead", job: t => [jobLeadRaw(t)], proj: p => [(p.lead || "").trim()], field: "lead" },
+    { key: "squad", label: "Squadron leaders", one: "squadron leader", job: t => [(t.squadLeader || "").trim()], field: "squadLeader" },
+    { key: "workers", label: "Approved workers", one: "worker", job: t => workersOf(t), list: true },
+    { key: "subs", label: "Subcontractors", one: "subcontractor", job: t => subsOf(t), field: "subs", list: true }
+  ];
+  function groupUsage(g, n) {
+    const tasks = [...S.tasks.values()].filter(t => g.job(t).includes(n));
+    const projects = g.proj ? [...S.projects.values()].filter(p => g.proj(p).includes(n)) : [];
+    return { tasks, projects };
+  }
+  function groupNames(g) {
+    const m = new Map();
+    const add = n => { n = (n || "").trim(); if (n && !/^u_[A-Za-z0-9_-]{10,}$/.test(n) && !m.has(n)) m.set(n, n); };
+    for (const t of S.tasks.values()) g.job(t).forEach(add);
+    if (g.proj) for (const p of S.projects.values()) g.proj(p).forEach(add);
+    return [...m.values()].sort((a, b) => a.localeCompare(b));
+  }
+  const dedupe = arr => { const out = []; for (const v of arr) if (v && !out.some(x => x.toLowerCase() === v.toLowerCase())) out.push(v); return out; };
+  // Replace `from` with `to` within one group only ("" removes it).
+  async function replaceNameIn(g, from, to) {
+    const { tasks, projects } = groupUsage(g, from);
+    const ops = [];
+    for (const t of tasks) {
+      const upd = { ...stamp() };
+      if (g.key === "workers") { upd.workers = dedupe(workersOf(t).map(x => x === from ? to : x)); upd.assignee = ""; }
+      else if (g.key === "subs") upd.subs = dedupe(subsOf(t).map(x => x === from ? to : x));
+      else upd[g.field] = to;
+      if (to && g.field && Array.isArray(t.history)) upd.history = t.history.map(e => {
+        if (g.key === "subs") return Array.isArray(e.subs) ? Object.assign({}, e, { subs: e.subs.map(x => x === from ? to : x) }) : e;
+        return (e[g.field] || "").trim() === from ? Object.assign({}, e, { [g.field]: to }) : e;
+      });
+      ops.push([S.db.doc("tasks/" + t.id), upd]);
+    }
+    for (const p of projects) ops.push([S.db.doc("projects/" + p.id), { [g.field]: to }]);
+    return write(async () => {
+      for (let i = 0; i < ops.length; i += 400) {
+        const b = S.db.batch();
+        for (const [ref, upd] of ops.slice(i, i + 400)) b.update(ref, upd);
+        await b.commit();
+      }
+    }, to ? `Changed ${g.one} "${from}" to "${to}"` : `Removed ${g.one} "${from}"`);
+  }
+
+  function openNames() {
+    const draw = () => {
+      const sections = NAME_GROUPS.map(g => {
+        const names = groupNames(g);
+        const rows = names.map(n => {
+          const u = groupUsage(g, n);
+          const where = [u.tasks.length ? plural(u.tasks.length, "job") : "", u.projects.length ? plural(u.projects.length, "project") : ""].filter(Boolean).join(", ");
+          const row = h("div", { class: "logrow" });
+          const normal = () => row.replaceChildren(
+            h("div", null, h("b", { text: n }), h("span", { class: "hint", text: where })),
+            h("div", { class: "proj-actions" },
+              h("button", { class: "btn", type: "button", onclick: fix }, "Fix spelling"),
+              h("button", { class: "btn danger", type: "button", onclick: remove }, "Remove")));
+          const fix = () => {
+            const inp = h("input", { type: "text", class: "select", id: `nm-fix-${g.key}`, value: n, autocomplete: "off", style: "flex:1 1 160px;min-width:0" });
+            const go = async () => {
+              const v = inp.value.trim();
+              if (!v || v === n) { normal(); return; }
+              await replaceNameIn(g, n, v);
+            };
+            inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); if (e.key === "Escape") { e.stopPropagation(); normal(); } });
+            row.replaceChildren(h("div", { class: "proj-actions", style: "flex:1 1 auto" }, inp,
+              h("button", { class: "btn primary", type: "button", onclick: go }, "Save"),
+              h("button", { class: "btn", type: "button", onclick: normal }, "Cancel")),
+              h("span", { class: "hint", text: `Changes "${n}" as ${g.one} on ${where}${g.field ? ", including past change records" : ""}. Other roles are left alone.` }));
+            setTimeout(() => { inp.focus(); inp.select(); }, 20);
+          };
+          const remove = () => row.replaceChildren(
+            h("span", { class: "hint", text: `Remove "${n}" as ${g.one} from ${where}? Other roles and past change records keep the name.` }),
+            h("div", { class: "proj-actions" },
+              h("button", { class: "btn danger solid", type: "button", onclick: () => replaceNameIn(g, n, "") }, "Yes, remove"),
+              h("button", { class: "btn", type: "button", onclick: normal }, "Keep")));
+          normal();
+          return row;
+        });
+        return h("section", { class: "name-group" },
+          h("div", { class: "section-lbl", text: `${g.label} (${names.length})` }),
+          rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: `No ${g.label.toLowerCase()} entered yet.` }));
+      });
+      openSheet("Saved names", h("div", { class: "sheet-b" },
+        h("p", { class: "hint", text: "Names are grouped by the role they're entered under. Fix or remove a name within one group; the same person in another role isn't changed." }),
+        sections),
+        h("div", { class: "sheet-f" }, h("button", { class: "btn", type: "button", onclick: openProjects }, "Back to Projects")), draw);
+    };
+    draw();
+  }
+
+  // ---------- projects ----------
+  function openProjects() {
+    const draw = (keepFocus) => {
+      const ro = !S.canWrite || !S.db;
+      const counts = {}; for (const t of S.tasks.values()) counts[t.projectId] = (counts[t.projectId] || 0) + 1;
+      namesList();
+      const rows = sortedProjects().map(p => {
+        const nm = h("input", { type: "text", id: "pn-" + p.id, value: p.name || "", disabled: ro, autocomplete: "off" });
+        const ad = h("input", { type: "text", id: "pa-" + p.id, value: p.address || "", disabled: ro, placeholder: "Address", autocomplete: "off" });
+        const pc = h("input", { type: "text", id: "pc-" + p.id, list: "names-dl", value: p.coordinator || "", disabled: ro, placeholder: "Manages the calendar", autocomplete: "off" });
+        const pl = h("input", { type: "text", id: "pl-" + p.id, list: "names-dl", value: p.lead || "", disabled: ro, placeholder: "Runs the job on site", autocomplete: "off" });
+        const actions = h("div", { class: "proj-actions" });
+        const n = counts[p.id] || 0;
+        if (!ro) {
+          const del = h("button", { class: "btn danger", type: "button" }, "Delete");
+          del.addEventListener("click", () => {
+            if (n) { toast(`Move or delete this project's ${n} work item${n === 1 ? "" : "s"} first.`); return; }
+            actions.replaceChildren(h("span", { class: "hint", text: "Delete this project?" }),
+              h("button", { class: "btn danger solid", type: "button", onclick: () => write(() => S.db.doc("projects/" + p.id).delete(), "Project deleted") }, "Yes, delete"),
+              h("button", { class: "btn", type: "button", onclick: () => draw() }, "Keep"));
+          });
+          actions.append(
+            h("button", { class: "btn", type: "button", onclick: () => {
+              const v = nm.value.trim(); if (!v) { toast("A project needs a name."); return; }
+              write(() => S.db.doc("projects/" + p.id).update({ name: v, address: ad.value.trim(), coordinator: pc.value.trim(), lead: pl.value.trim() }), "Project saved");
+            } }, "Save"), del);
+        }
+        actions.append(h("span", { class: "hint", text: `${n} work item${n === 1 ? "" : "s"}` }));
+        return h("div", { class: "proj" }, field("Name", nm, "pn-" + p.id), field("Address", ad, "pa-" + p.id),
+          h("div", { class: "row2" }, field("Project coordinator", pc, "pc-" + p.id), field("Project lead", pl, "pl-" + p.id)), actions);
+      });
+      const body = h("div", { class: "sheet-b" },
+        h("div", { class: "hint", text: "Each project is a job site. Every work item belongs to one project, and the filter at the top shows one site or all of them." }),
+        rows.length ? h("div", { class: "list" }, rows) : h("div", { class: "hint", text: "No projects yet." }));
+      if (!ro) {
+        const nn = h("input", { type: "text", id: "np-name", placeholder: "e.g. 1838 Westwood Ave", autocomplete: "off" });
+        const nc = h("input", { type: "text", id: "np-coord", list: "names-dl", placeholder: "Manages the calendar", autocomplete: "off" });
+        const nl = h("input", { type: "text", id: "np-lead", list: "names-dl", placeholder: "Runs the job on site", autocomplete: "off" });
+        const na = h("input", { type: "text", id: "np-addr", placeholder: "Address (optional)", autocomplete: "off" });
+        body.append(h("div", { class: "section-lbl", text: "Add a project" }),
+          h("div", { class: "newproj" }, field("Project name", nn, "np-name"), field("Address", na, "np-addr"),
+            h("div", { class: "row2" }, field("Project coordinator", nc, "np-coord"), field("Project lead", nl, "np-lead")),
+            h("div", null, h("button", { class: "btn primary", type: "button", onclick: () => {
+              const v = nn.value.trim(); if (!v) { toast("Give the project a name."); nn.focus(); return; }
+              write(() => S.db.collection("projects").doc().set({ name: v, address: na.value.trim(), coordinator: nc.value.trim(), lead: nl.value.trim(), createdBy: S.me || "Someone", createdAt: new Date().toISOString() }), "Project added");
+            } }, "Add project"))));
+      }
+      if (!ro) {
+        const fi = h("input", { type: "file", id: "imp-file", accept: ".json,application/json" });
+        const out = h("div", { class: "hint", role: "status" });
+        fi.addEventListener("change", () => { if (fi.files[0]) importFile(fi.files[0], out); });
+        body.append(h("div", { class: "section-lbl", text: "Full backup" }),
+          h("div", { class: "proj-actions" }, h("button", { class: "btn", type: "button", onclick: downloadBackup }, "Download full backup (.json)"),
+            h("span", { class: "hint", text: "Every project, job and daily log, for safekeeping or moving to another copy of the schedule." })));
+        body.append(h("div", { class: "section-lbl", text: "Import" }),
+          h("div", { class: "import-box" }, h("span", { class: "hint", text: "Bring in projects and work from a schedule export file (.json). Items already in the schedule are skipped." }), fi, out));
+        body.append(h("div", { class: "section-lbl", text: "Saved names" }),
+          h("div", { class: "proj-actions" }, h("button", { class: "btn", type: "button", onclick: openNames }, "Manage saved names"),
+            h("span", { class: "hint", text: `${plural(knownNames().length, "name")} suggested when typing workers and leads` })));
+        body.append(h("div", { class: "section-lbl", text: "This device" }),
+          h("div", null, h("button", { class: "btn", type: "button", onclick: lockDevice }, "Lock editing on this device")));
+      }
+      openSheet("Projects", body, null, null);
+    };
+    draw();
+  }
+
+  // ---------- events ----------
+  $("btn-add").addEventListener("click", () => openTaskForm(null, {}));
+  $("btn-projects").addEventListener("click", openProjects);
+  $("btn-stats").addEventListener("click", openStats);
+  $("keybox").open = recall("key", "closed") === "open";
+  $("keybox").addEventListener("toggle", () => store("key", $("keybox").open ? "open" : "closed"));
+  window.addEventListener("resize", () => { if (!$("overlay").hidden) applySheetW(); });
+  $("cscrim").addEventListener("click", () => { if (S.cmodalCancel) S.cmodalCancel(); });
+  $("btn-export").addEventListener("click", exportXlsx);
+  $("btn-lock").addEventListener("click", () => S.canWrite ? lockDevice() : openUnlock());
+  $("banner-btn").addEventListener("click", openUnlock);
+  $("btn-today").addEventListener("click", () => { S.cursor = new Date(); renderAll(); });
+  $("btn-prev").addEventListener("click", () => { S.cursor = S.view === "month" ? new Date(S.cursor.getFullYear(), S.cursor.getMonth() - 1, 1) : addDays(S.cursor, -7); renderAll(); });
+  $("btn-next").addEventListener("click", () => { S.cursor = S.view === "month" ? new Date(S.cursor.getFullYear(), S.cursor.getMonth() + 1, 1) : addDays(S.cursor, 7); renderAll(); });
+  $("f-project").addEventListener("change", e => { S.project = e.target.value; store("project", S.project); renderAll(); });
+  $("f-coord").addEventListener("change", e => { S.coord = e.target.value; store("coord", S.coord); if (S.project !== "all" && !coordMatchProj(S.project)) { S.project = "all"; store("project", "all"); } renderAll(); });
+  $("f-trade").addEventListener("change", e => { S.trade = e.target.value; store("trade", S.trade); renderAll(); });
+  $("f-flag").addEventListener("change", e => { S.flag = e.target.value; store("flag", S.flag); renderAll(); });
+  $("v-month").addEventListener("click", () => { S.view = "month"; store("view", "month"); renderAll(); });
+  $("v-week").addEventListener("click", () => {
+    S.view = "week"; store("view", "week");
+    const now = new Date(); if (S.cursor.getMonth() === now.getMonth() && S.cursor.getFullYear() === now.getFullYear()) S.cursor = now;
+    renderAll();
+  });
+  $("scrim").addEventListener("click", closeSheet);
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("cmodal").hidden) { if (S.cmodalCancel) S.cmodalCancel(); return; }
+    if (!$("overlay").hidden) closeSheet();
+  });
+
+  // ---------- boot ----------
+  renderAll();
+  (() => {
+    const db = makeStore();
+    S.db = db;
+    let dev = recall("device", "");
+    if (!dev) { dev = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)); store("device", dev); }
+    S.uid = dev;
+    S.canWrite = !!recall("token", "") && recall("editor", "") === "1";
+    const apply = col => snap => {
+      const m = new Map(snap.docs.map(d => [d.id, Object.assign({ id: d.id }, d.data())]));
+      if (col === "projects") { S.projects = m; S.loadedP = true; }
+      else if (col === "tasks") { S.tasks = m; S.loadedT = true; }
+      else { S.logs = m; S.loadedL = true; }
+      renderAll();
+    };
+    db.collection("projects").onSnapshot(apply("projects"));
+    db.collection("tasks").onSnapshot(apply("tasks"));
+    db.collection("logs").onSnapshot(apply("logs"));
+    // Show the copy saved on this device right away, then fetch what changed.
+    if (db.loadCache()) db.emitAll(true);
+    S.ready = true; renderAll();
+    const timer = setTimeout(() => { if (!(S.loadedP && S.loadedT)) { S.slow = true; renderAll(); } }, 10000);
+    let fails = 0;
+    const refresh = () => db.sync().then(() => {
+      clearTimeout(timer);
+      if (S.slow || S.offline) { S.slow = false; S.offline = false; renderAll(); }
+      fails = 0;
+    }, () => {
+      fails++;
+      if (fails >= 2 && !S.offline) { S.offline = true; renderAll(); }
+    });
+    refresh();
+    // Who is this device? (Viewing never waits on this.)
+    if (recall("token", "")) apiCall("me").then(r => {
+      const was = S.canWrite;
+      S.canWrite = !!r.editor;
+      store("editor", r.editor ? "1" : "");
+      if (!r.editor) store("token", "");
+      if (r.name && !S.me) { S.me = r.name; store("name", r.name); }
+      if (was !== S.canWrite) renderAll();
+    }, () => {});
+    setInterval(() => { if (!document.hidden) refresh(); }, 15000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+    window.addEventListener("focus", refresh);
+    window.addEventListener("online", refresh);
+  })();
+})();
+</script>
+</body>
+</html>

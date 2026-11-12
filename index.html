@@ -1083,6 +1083,16 @@ button { cursor: pointer; }
     S.canWrite = false; closeSheet(); renderAll(); toast("Editing locked on this device");
   }
 
+  // ---------- backup ----------
+  function downloadBackup() {
+    const pack = m => [...m.values()].map(x => { const d = Object.assign({}, x); const id = d.id; delete d.id; return { id, data: d }; });
+    const out = { exportedAt: new Date().toISOString(), projects: pack(S.projects), tasks: pack(S.tasks), logs: pack(S.logs) };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = `Job Site Schedule backup ${todayIso()}.json`;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(`Backup downloaded: ${plural(out.projects.length, "project")}, ${plural(out.tasks.length, "job")}, ${plural(out.logs.length, "log")}`);
+  }
+
   // ---------- import ----------
   async function importFile(file, out) {
     out.textContent = "";
@@ -2305,6 +2315,9 @@ button { cursor: pointer; }
         const fi = h("input", { type: "file", id: "imp-file", accept: ".json,application/json" });
         const out = h("div", { class: "hint", role: "status" });
         fi.addEventListener("change", () => { if (fi.files[0]) importFile(fi.files[0], out); });
+        body.append(h("div", { class: "section-lbl", text: "Full backup" }),
+          h("div", { class: "proj-actions" }, h("button", { class: "btn", type: "button", onclick: downloadBackup }, "Download full backup (.json)"),
+            h("span", { class: "hint", text: "Every project, job and daily log, for safekeeping or moving to another copy of the schedule." })));
         body.append(h("div", { class: "section-lbl", text: "Import" }),
           h("div", { class: "import-box" }, h("span", { class: "hint", text: "Bring in projects and work from a schedule export file (.json). Items already in the schedule are skipped." }), fi, out));
         body.append(h("div", { class: "section-lbl", text: "Saved names" }),
